@@ -1,0 +1,142 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - Phayao Place</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            height: 100%;
+        }
+        .background {
+            background: url('image/lobby.jpg') no-repeat center center/cover;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .overlay {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+        }
+        .login-box {
+            background: rgba(0, 0, 0, 0.756);
+            padding: 20px 40px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            max-width: 400px;
+            width: 612px;
+            height: 674px;
+            justify-items: center;
+        }
+        .tagline {
+            margin-top: 20%;
+            font-size: 1.5em;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+        .input-field {
+            width: 90%;
+            padding: 10px;
+            margin: 12px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            background: rgba(133, 122, 122, 0.777);
+            color: #ffffff;
+        }
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .login-button {
+            width: 100%;
+            padding: 10px;
+            background: #e67e22;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .login-button:hover {
+            background: #d35400;
+        }
+        .social-login {
+            margin-top: 15px;
+        }
+        .social-button {
+            width: 250px;
+            padding: 10px;
+            margin-top: 30px;
+            background: rgba(133, 122, 122, 0.777);
+            border: none;
+            border-radius: 5px;
+            color: black;
+            font-size: 1em;
+            cursor: pointer;
+            display: flex;
+            margin-left: 20%;
+            justify-content: center;
+        }
+        .language-switch {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.75);
+            padding: 15px;
+            border-radius: 15%;
+        }
+        .language-switch img {
+            width: 20px;
+            height: auto;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="background">
+        <div class="overlay">
+            <div class="login-box">
+                <p class="tagline">Create <span style="color: #e67e22;">Account</span></p>
+                <form>
+                    <input type="text" placeholder="Username" class="input-field">
+                    <input type="text" placeholder="First" class="input-field" style="width: 40%; margin-right: 4%;">
+                    <input type="text" placeholder="Last name" class="input-field" style="width: 40%;">
+                    <input type="email" placeholder="Email" class="input-field">
+                    <p>or</p>
+                    <div class="social-login">
+                        <button type="button" class="social-button" onclick="window.location.href='/auth/google'">
+                            Google
+                        </button>
+                        <button type="button" class="social-button" onclick="window.location.href='/auth/facebook'">
+                            Facebook
+                        </button>
+                        <button type="button" class="social-button" onclick="window.location.href='/auth/apple'">
+                            Sign in with Apple
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="language-switch">
+                <img src="image/ธงชาติไทย.png" alt="Thai Flag"> ภาษาไทย
+            </div>
+        </div>
+    </div>
+</body>
+</html>
