@@ -5,6 +5,7 @@ const PORT = 3000;
 const mysql = require('mysql2');
 const bodyParser = require('body-parser');
 const session = require('express-session');
+const Stripe = require('stripe');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 // const FacebookStrategy = require('passport-facebook').Strategy;
 // const AppleStrategy = require('passport-apple').Strategy;
@@ -62,6 +63,12 @@ connection.query('SELECT * FROM users', (err, results) => {
 
 // ปิดการเชื่อมต่อเมื่อเสร็จสิ้น
 connection.end();
+
+// ใช้ Stripe Secret Key
+const stripe = Stripe('sk_test_51QkNFP07aI9JylI3vxG5J5aEIGGu3mk7aK43gXKD3yQjRp77XFvQEwYYi57t5xgDRjx8Hw9rjiwMXqNe7r1AzQyT00DVQZuBhe');
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 
 // ใช้ express-session สำหรับจัดการ session
@@ -306,4 +313,20 @@ app.post('/createaccount', (req, res) => {
             });
         }
     });
+});
+
+app.get('/payment', (req, res) => {
+    res.render('payment', { message: null }); // Pass a default message
+});
+
+app.post('/payment', (req, res) => {
+    const { amount, method } = req.body;
+
+    if (!amount || !method) {
+        res.render('payment', { message: 'Please fill out all fields!' });
+    } else {
+        // Handle payment logic here
+        console.log(`Payment received: ${amount} via ${method}`);
+        res.render('payment', { message: 'Payment successful!' });
+    }
 });
