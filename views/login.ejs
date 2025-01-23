@@ -88,6 +88,23 @@
         .footer-links a:hover {
             text-decoration: underline;
         }
+        .social-login {
+            margin-top: 15px;
+        }
+        .social-button {
+            width: 250px;
+            padding: 10px;
+            margin-top: 30px;
+            background: rgba(133, 122, 122, 0.777);
+            border: none;
+            border-radius: 5px;
+            color: black;
+            font-size: 1em;
+            cursor: pointer;
+            display: flex;
+            margin-left: 20%;
+            justify-content: center;
+        }
         .language-switch {
             position: absolute;
             top: 20px;
@@ -116,6 +133,14 @@
                 <form>
                     <input type="text" placeholder="Username" class="input-field">
                     <input type="password" placeholder="Password" class="input-field">
+                    <div class="social-login">
+                        <button type="button" class="social-button">
+                             Google
+                        </button>
+                        <button type="button" class="social-button">
+                             Facebook
+                        </button>
+                    </div>
                     <button type="submit" class="login-button">Login</button>
                 </form>
                 <div class="footer-links">
