@@ -13,9 +13,9 @@ const passport = require('passport');
 app.set('view engine', 'ejs');
 
 // กำหนดโฟลเดอร์ views
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', path.join(__dirname, '../views'));
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '../public')));
 
 // เส้นทางไปยังหน้าหลัก
 app.get('/', (req, res) => {
@@ -24,9 +24,15 @@ app.get('/', (req, res) => {
 });
 
 // เริ่มต้นเซิร์ฟเวอร์
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+app.get("/", (req, res) => {
+    res.send("Hello from Vercel using Express.js!");
 });
+  
+app.get("/about", (req, res) => {
+    res.send("This is the about page.");
+});
+  
+module.exports = app;
 
 // สร้างการเชื่อมต่อ
 const connection = mysql.createConnection({
