@@ -18,13 +18,13 @@
         header {
             background: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
             color: white;
-            padding: 20px 40px;
+            padding: 10px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: absolute; 
             top: 0;
-            width: 100%;
+            width: calc(100% - 80px);
             z-index: 1000;
         }
         nav {
@@ -161,7 +161,6 @@
             methods.forEach(method => method.classList.remove('selected'));
             event.currentTarget.classList.add('selected');
         }
-        
     </script>
 </head>
 <body>
@@ -186,7 +185,7 @@
     <!-- Main Content -->
     <div class="container">
         <!-- Payment Methods -->
-        <div class="payment-methods"method="POST" action="/payment" enctype="multipart/form-data"></div>>
+        <div class="payment-methods">
             <h2>เลือกช่องทางการชำระเงิน</h2>
             <div class="payment-method" onclick="selectMethod(event)">
                 <img src="./image/krungthai Next.png" alt="Krungthai Next">
