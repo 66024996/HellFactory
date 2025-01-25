@@ -10,7 +10,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 // const FacebookStrategy = require('passport-facebook').Strategy;
 // const AppleStrategy = require('passport-apple').Strategy;
 const passport = require("passport");
-
+   
 app.set("view engine", "ejs");
 
 // กำหนดโฟลเดอร์ views
