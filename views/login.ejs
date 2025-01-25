@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Login</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            height: 100%;
+        }
+        .background {
+            background: url('image/lobby.jpg') no-repeat center center/cover;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .overlay {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+        }
+        .login-box {
+            background: rgba(0, 0, 0, 0.756);
+            padding: 20px 40px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            max-width: 400px;
+            width: 612px;
+            height: 674px;
+        }
+        .logo {
+            width: 250px;
+            height: 200px;
+            background: no-repeat center/cover;
+        }
+        .tagline {
+            font-size: 0.9em;
+            color: #ffff;
+            margin-bottom: 20px;
+        }
+        .input-field {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            background: rgba(133, 122, 122, 0.777);
+            color: #ffffff;
+            justify-content: center;
+            align-items: center;
+        }
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .login-button {
+            width: 100%;
+            padding: 10px;
+            background: rgba(133, 122, 122, 0.777);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 50px;
+            text-align: center;
+        }
+        .login-button:hover {
+            background: #e67e22;
+        }
+        .footer-links {
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+        .footer-links a {
+            color: #f39c12;
+            text-decoration: none;
+        }
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        .social-login {
+            margin-top: 15px;
+        }
+        .social-button {
+            width: 250px;
+            padding: 10px;
+            margin-top: 30px;
+            background: rgba(133, 122, 122, 0.777);
+            border: none;
+            border-radius: 5px;
+            color: black;
+            font-size: 1em;
+            cursor: pointer;
+            display: flex;
+            margin-left: 20%;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="background">
+        <div class="overlay">
+            <div class="login-box">
+                <img src=".\image\โลโก้สีส้ม.png" alt="Phayao Place Logo" class="logo">
+                <form>
+                    <input type="text" placeholder="Username" class="input-field">
+                    <input type="password" placeholder="Password" class="input-field">
+                    <div class="social-login">
+                        <button type="button" class="social-button">
+                             Google
+                        </button>
+                        <button type="button" class="social-button">
+                             Facebook
+                        </button>
+                    </div>
+                    <button type="submit" class="login-button">Login</button>
+                </form>
+                <div class="footer-links">
+                    <a href="/newpassword">forgot password?</a> or <a href="/createaccount">create account</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

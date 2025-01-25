@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Phayao Place - การชำระเงิน</title>
+    <style>
+        /* General Styles */
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            height: 100%;
+            background: #ffffff00;  
+        }
+
+        /* Navbar Section (Overlay on Header Image) */
+        header {
+            background: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: absolute; 
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+        nav {
+            
+            position: sticky; 
+            top: 0; 
+            z-index: 1000;
+        }
+
+        nav a {
+            color: white;
+            margin: 0 15px;
+            text-decoration: none;
+            font-size: 1em;
+            transition: color 0.6s;
+        }
+
+        nav a:hover {
+            color: #f39c12;
+        }
+
+        
+        .header-image {
+            background-image: url('./image/หน้าโอนเงิน.jpg'); 
+            background-size: cover;
+            background-position: center;
+            height: 300px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        
+        .container {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            padding-top: 2%;
+        }
+
+        
+        .payment-methods {
+            width: 45%;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .payment-methods h2 {
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .payment-method {
+            padding: 15px;
+            background: #f2f2f2;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .payment-method img {
+            max-width: 40px;
+            max-height: 40px;
+            margin-right: 15px;
+        }
+
+        .payment-method.selected {
+            background: #e67e22;
+            border-color: #e67e22;
+        }
+
+        .confirm-button {
+            background: #f7b77d;
+            color: #333;
+            padding: 12px;
+            text-align: center;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        
+        /* Reservation Details Section */
+        .reservation-details {
+            width: 45%;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* เพิ่มช่องว่างระหว่างเนื้อหา */
+        }
+
+        .details-content {
+            display: flex; /* ใช้ Flexbox */
+            justify-content: space-between; /* จัดวางระหว่างเนื้อหาและรูป */
+            align-items: center;
+            gap: 15px; /* เพิ่มระยะห่างระหว่างเนื้อหาและรูป */
+        }
+
+        .details-content img {
+            width: 50%; /* ขนาดของรูปภาพ 50% ของ container */
+            border-radius: 10px; /* เพิ่มมุมโค้ง */
+            margin-bottom: 0; /* เอา margin ล่างออก */
+        }
+
+        .book-button {
+            background: #e67e22;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+    </style>
+    <script>
+        function selectMethod(event) {
+            const methods = document.querySelectorAll('.payment-method');
+            methods.forEach(method => method.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+        }
+    </script>
+</head>
+<body>
+    <!-- Navbar Section -->
+    <header>
+        <div class="logo">Phayao Place</div>
+        <nav>
+            <a href="#about">About</a>
+            <a href="#rooms">Rooms</a>
+            <a href="#facilities">Facilities</a>
+            <a href="#dining">Dining</a>
+            <a href="#offer">Offer</a>
+            <a href="#reservation">Reservation</a>
+        </nav>
+    </header>
+
+    <!-- Header Image Section -->
+    <div class="header-image">
+        Phayao Place - การชำระเงิน
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Payment Methods -->
+        <div class="payment-methods">
+            <h2>เลือกช่องทางการชำระเงิน</h2>
+            <div class="payment-method" onclick="selectMethod(event)">
+                <img src="./image/krungthai Next.png" alt="Krungthai Next">
+                <span>Krungthai Next</span>
+            </div>
+            <div class="payment-method" onclick="selectMethod(event)">
+                <img src="./image/logopayso.png" alt="Pay Solutions">
+                <span>ชำระเงินผ่าน Pay Solutions</span>
+            </div>
+            <div class="payment-method" onclick="selectMethod(event)">
+                <img src="./image/credit-card.png" alt="Credit Card">
+                <span>Credit Card</span>
+            </div>
+            <div class="confirm-button">ยืนยัน</div>
+        </div>
+
+        <!-- Reservation Details -->
+    <div class="reservation-details">
+        <div class="details-content">
+            <div>
+                <h3>Superior Terrace</h3>
+                <p>2 guests, 1 night</p>
+                <p>2,592.00 Bath</p>
+                <p>Free cancellation!</p>
+                <p>Service charge: 259.20 Bath</p>
+            </div>
+            <img src=".\image\ห้องนอน(5).png" alt="Room Image">
+        </div>
+        <div class="book-button">Book.</div>
+    </div>
+
+    </div>
+</body>
+</html>
