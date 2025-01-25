@@ -64,6 +64,7 @@ connection.query('SELECT * FROM users', (err, results) => {
 // ปิดการเชื่อมต่อเมื่อเสร็จสิ้น
 connection.end();
 
+
 // ใช้ Stripe Secret Key
 const stripe = Stripe('sk_test_51QkNFP07aI9JylI3vxG5J5aEIGGu3mk7aK43gXKD3yQjRp77XFvQEwYYi57t5xgDRjx8Hw9rjiwMXqNe7r1AzQyT00DVQZuBhe');
 

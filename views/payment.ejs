@@ -161,6 +161,7 @@
             methods.forEach(method => method.classList.remove('selected'));
             event.currentTarget.classList.add('selected');
         }
+        
     </script>
 </head>
 <body>
@@ -185,7 +186,7 @@
     <!-- Main Content -->
     <div class="container">
         <!-- Payment Methods -->
-        <div class="payment-methods">
+        <div class="payment-methods"method="POST" action="/payment" enctype="multipart/form-data"></div>>
             <h2>เลือกช่องทางการชำระเงิน</h2>
             <div class="payment-method" onclick="selectMethod(event)">
                 <img src="./image/krungthai Next.png" alt="Krungthai Next">
@@ -214,7 +215,7 @@
             </div>
             <img src=".\image\ห้องนอน(5).png" alt="Room Image">
         </div>
-        <div class="book-button">Book.</div>
+        <div class="book-button">Book</div>
     </div>
 
     </div>
