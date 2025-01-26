@@ -32,9 +32,9 @@ app.get("/", (req, res) => {
     res.send("Hello from Vercel using Express.js!");
 });
   
-app.get("/about", (req, res) => {
-    res.send("This is the about page.");
-});
+// app.get("/about", (req, res) => {
+//     res.send("This is the about page.");
+// });
   
 module.exports = app;
 
@@ -352,6 +352,10 @@ app.get("/about", (req, res) => {
   res.render("about.ejs");
 });
 
+app.get("/Facilities", (req, res) => {
+  res.render("Facilities.ejs");
+});
+
 app.get('/payment', (req, res) => {
     res.render('payment', { message: null }); // Pass a default message
 });
@@ -367,3 +371,7 @@ app.post('/payment', (req, res) => {
         res.render('payment', { message: 'Payment successful!' });
     }
 });
+
+app.listen(PORT, () => {
+  console.log("server is running on port " + PORT)
+})
