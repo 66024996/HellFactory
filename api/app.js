@@ -375,3 +375,49 @@ app.post('/payment', (req, res) => {
 app.listen(PORT, () => {
   console.log("server is running on port " + PORT)
 })
+
+app.post("/create-bill", (req, res) => {
+  const { userId, amount, dueDate } = req.body;
+  db.query(
+      "INSERT INTO bills (user_id, amount, due_date, status) VALUES (?, ?, ?, 'pending')",
+      [userId, amount, dueDate],
+      (err, results) => {
+          if (err) return res.status(500).json(err);
+          res.json({ message: "บันทึกบิลสำเร็จ", billId: results.insertId });
+      }
+  );
+});
+
+app.post("/update-payment", (req, res) => {
+  const { billId, transactionId } = req.body;
+  db.query("UPDATE bills SET status = 'paid', transaction_id = ?, paid_at = NOW() WHERE id = ?", 
+      [transactionId, billId], 
+      (err, result) => {
+          if (err) return res.status(500).json({ error: err.message });
+          res.json({ message: "✅ Payment successful!" });
+      }
+  );
+});
+
+app.post("/webhook-payment", (req, res) => {
+  const { transactionId, billId, status } = req.body;
+
+  if (status === "success") {
+      db.query("UPDATE bills SET status = 'paid' WHERE id = ?", [billId]);
+      console.log(`บิล ${billId} ชำระเงินเรียบร้อย`);
+  }
+
+  res.sendStatus(200);
+});
+
+app.get("/get-bill-status", (req, res) => {
+  const { billId } = req.query;
+  db.query("SELECT status FROM bills WHERE id = ?", [billId], (err, results) => {
+      if (err) return res.status(500).json({ error: err.message });
+      if (results.length > 0) {
+          res.json({ status: results[0].status });
+      } else {
+          res.status(404).json({ error: "ไม่พบบิล" });
+      }
+  });
+});

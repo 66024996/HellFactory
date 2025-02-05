@@ -119,7 +119,7 @@
         }
 
         
-        /* Reservation Details Section */
+        
         .reservation-details {
             width: 45%;
             background: #ffffff;
@@ -128,20 +128,20 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
-            gap: 15px; /* เพิ่มช่องว่างระหว่างเนื้อหา */
+            gap: 15px;/
         }
 
         .details-content {
-            display: flex; /* ใช้ Flexbox */
-            justify-content: space-between; /* จัดวางระหว่างเนื้อหาและรูป */
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 15px; /* เพิ่มระยะห่างระหว่างเนื้อหาและรูป */
+            gap: 15px;
         }
 
         .details-content img {
-            width: 50%; /* ขนาดของรูปภาพ 50% ของ container */
-            border-radius: 10px; /* เพิ่มมุมโค้ง */
-            margin-bottom: 0; /* เอา margin ล่างออก */
+            width: 50%;
+            border-radius: 10px;
+            margin-bottom: 0;
         }
 
         .book-button {
@@ -161,6 +161,23 @@
             methods.forEach(method => method.classList.remove('selected'));
             event.currentTarget.classList.add('selected');
         }
+
+        async function checkPaymentStatus(billId) {
+            try {
+                const response = await fetch(`/get-bill-status?billId=${billId}`);
+                const data = await response.json();
+                
+                if (data.status === "paid") {
+                    document.querySelector(".confirm-button").innerText = "ชำระเงินสำเร็จ ✅";
+                    document.querySelector(".confirm-button").style.background = "#2ecc71";
+                } else {
+                    alert("ยังไม่ได้รับการชำระเงิน กรุณาลองใหม่อีกครั้ง");
+                }
+            } catch (error) {
+                console.error("เกิดข้อผิดพลาด:", error);
+            }
+        }
+        setInterval(() => checkPaymentStatus(123), 5000); // ตรวจสอบทุก 5 วินาที
     </script>
 </head>
 <body>
@@ -199,7 +216,7 @@
                 <img src="./image/credit-card.png" alt="Credit Card">
                 <span>Credit Card</span>
             </div>
-            <div class="confirm-button">ยืนยัน</div>
+            <div class="confirm-button" onclick="checkPaymentStatus(123)">ยืนยันการชำระเงิน</div>
         </div>
 
         <!-- Reservation Details -->
