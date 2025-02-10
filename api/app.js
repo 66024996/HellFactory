@@ -410,14 +410,22 @@ app.post("/webhook-payment", (req, res) => {
   res.sendStatus(200);
 });
 
-app.get("/get-bill-status", (req, res) => {
-  const { billId } = req.query;
-  db.query("SELECT status FROM bills WHERE id = ?", [billId], (err, results) => {
-      if (err) return res.status(500).json({ error: err.message });
-      if (results.length > 0) {
-          res.json({ status: results[0].status });
-      } else {
-          res.status(404).json({ error: "ไม่พบบิล" });
-      }
-  });
+// app.get("/get-bill-status", (req, res) => {
+//   const { billId } = req.query;
+//   db.query("SELECT status FROM bills WHERE id = ?", [billId], (err, results) => {
+//       if (err) return res.status(500).json({ error: err.message });
+//       if (results.length > 0) {
+//           res.json({ status: results[0].status });
+//       } else {
+//           res.status(404).json({ error: "ไม่พบบิล" });
+//       }
+//   });
+// });
+
+app.get("/room", (req, res) => {
+  res.render("room"); // สมมติว่าใช้ EJS
+});
+
+app.get("/roomS", (req, res) => {
+  res.render("roomS"); // สมมติว่าใช้ EJS
 });
