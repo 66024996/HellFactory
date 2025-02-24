@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรไฟล์ผู้เช่า</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: url('./image/Profile.png') no-repeat center center/cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .navbar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 25px 50px;
+            box-sizing: border-box;
+        }
+
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .menu-container {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .menu-items {
+            display: flex;
+            gap: 20px;
+        }
+
+        .menu-items span {
+            cursor: pointer;
+            transition: color 0.3s ease, background-color 0.3s ease;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 20px;
+        }
+
+        .menu-items span:hover {
+            color: black;
+            background-color: #F2CC8F;
+        }
+
+        .profile-button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            background: #F2CC8F;
+            border-radius: 50%;
+        }
+
+        .profile-button img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            transition: transform 0.2s ease;
+        }
+
+        .profile-button img:hover {
+            transform: scale(1.1);
+        }
+
+        .logout-button {
+            position: absolute;
+            top: 120px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .logout-button img {
+            width: 60%;
+            height: 60%;
+            transition: transform 0.2s ease;
+        }
+
+        .logout-button img:hover {
+            transform: scale(1.1);
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .popup-content {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            width: 500px;
+            height: 200px;
+        }
+
+        .popup-content p {
+            font-size: 18px;
+            margin-bottom: 20px;
+            margin-top: 50px;
+        }
+
+        .popup-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .btn-cancel,
+        .btn-confirm {
+            flex: 1;
+            padding: 15px 10px;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .btn-cancel {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-cancel:hover {
+            background: #c0c0c0;
+        }
+
+        .btn-confirm {
+            background: #f2cc8f;
+            color: white;
+        }
+
+        .btn-confirm:hover {
+            background: #daa55d;
+        }
+
+        .profile-container {
+            display: flex;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 1000px;
+            width: 90%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .left-section {
+            text-align: center;
+            padding: 10px;
+            width: 30%;
+        }
+
+        .left-section img {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            margin-bottom: 20px;
+            object-fit: cover;
+            background: gray;
+            border: 3px solid #004367;
+        }
+
+        .info-box {
+            background: #FF9B81;
+            color: black;
+            padding: 15px 20px;
+            border-radius: 15px;
+            margin: 15px 0;
+            font-size: 18px;
+        }
+
+        .edit-button, .save-button {
+            background: #F2CC8F;
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .edit-button:hover, .save-button:hover {
+            background: #b4976a;
+        }
+
+        .right-section {
+            flex-grow: 1;
+            padding: 40px;
+            border-radius: 10px;
+            margin-top: 70px;
+            margin-left: 20px;
+        }
+
+        .form-input {
+            margin-bottom: 15px;
+        }
+
+        .form-input label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .form-input input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <span class="brand">Phayao Place</span>
+        <div class="menu-container">
+            <div class="menu-items">
+                <span>About</span>
+                <span>Rooms</span>
+                <span>Facilities</span>
+                <span>Dining</span>
+                <span>Events</span>
+                <span>Reservation</span>
+                <span>Statistics</span>
+            </div>
+            <div class="profile-button" onclick="navigateToProfile()">
+                <img src="image/user.png" alt="Profile">
+            </div>
+        </div>
+    </div>    
+    <button class="logout-button" onclick="logout()">
+        <img src="image/log-out.png" alt="Logout">
+    </button>
+
+    <div id="logout-popup" class="popup-overlay hidden">
+        <div class="popup-content">
+            <p>คุณต้องการออกจากระบบใช่หรือไม่?</p>
+            <div class="popup-actions">
+                <button class="btn-cancel" onclick="hideLogoutPopup()">ยกเลิก</button>
+                <button class="btn-confirm" onclick="confirmLogout()">ออกจากระบบ</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-container">
+        <div class="left-section">
+            <img src="image/user.png" alt="Profile Picture" id="profile-icon">
+            <input type="file" id="upload-photo" style="display:none;" accept="image/*">
+            <button class="edit-button" onclick="uploadPhoto()">อัปโหลดรูป</button>
+            <div class="info-box" id="userinfo1"></div>
+        </div>
+        <div class="right-section">
+            <form id="editForm" style="display:none;">
+                <div class="form-input">
+                    <label for="name">ชื่อ</label>
+                    <input type="text" id="name" value="">
+                </div>
+                <div class="form-input">
+                    <label for="email">อีเมล</label>
+                    <input type="email" id="email" value="">
+                </div>
+                <div class="form-input">
+                    <label for="phone">เบอร์โทร</label>
+                    <input type="tel" id="phone" value="">
+                </div>
+                <button type="button" class="save-button" onclick="saveProfile()">บันทึกข้อมูล</button>
+            </form>
+            <div id="profileInfo">
+                <div class="info-box" id="userinfo2"></div>
+                <div class="info-box" id="userinfo3"></div>
+                <button class="edit-button" onclick="editProfile()">แก้ไขข้อมูลส่วนตัว</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let userinfo = [
+            {
+                email: 'Hellfactory@gmail.com',
+                phone: '000-000-0000',
+                name: 'น้องโอม คนเฟี้ยวฟ้าว'
+            }
+        ];
+
+        window.onload = () => {
+            loadProfile();
+        };
+
+        function loadProfile() {
+            document.getElementById('userinfo1').innerHTML = `${userinfo[0].name}`;
+            document.getElementById('userinfo2').innerHTML = `<strong>Email:</strong> ${userinfo[0].email}`;
+            document.getElementById('userinfo3').innerHTML = `<strong>Phone:</strong> ${userinfo[0].phone}`;
+        }
+
+        function editProfile() {
+            const editForm = document.getElementById('editForm');
+            const profileInfo = document.getElementById('profileInfo');
+
+            if (editForm.style.display === 'block') {
+                editForm.style.display = 'none';
+                profileInfo.style.display = 'block';
+            } else {
+                editForm.style.display = 'block';
+                profileInfo.style.display = 'none';
+
+                document.getElementById('name').value = userinfo[0].name;
+                document.getElementById('email').value = userinfo[0].email;
+                document.getElementById('phone').value = userinfo[0].phone;
+            }
+        }
+
+        function saveProfile() {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+
+            userinfo[0] = { name, email, phone };
+            loadProfile();
+
+            document.getElementById('editForm').style.display = 'none';
+            document.getElementById('profileInfo').style.display = 'block';
+
+            alert('บันทึกข้อมูลสำเร็จ!');
+        }
+
+        function uploadPhoto() {
+            document.getElementById('upload-photo').click();
+            document.getElementById('upload-photo').onchange = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        document.getElementById('profile-icon').src = e.target.result;
+                        alert('อัปโหลดรูปภาพสำเร็จ!');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+        }
+
+        function logout() {
+            document.getElementById('logout-popup').classList.remove('hidden');
+        }
+
+        function hideLogoutPopup() {
+            document.getElementById('logout-popup').classList.add('hidden');
+        }
+
+        function confirmLogout() {
+            alert('คุณได้ออกจากระบบแล้ว');
+            window.location.href = '/login';
+        }
+
+        function navigateToProfile() {
+            window.location.href = '/profile';
+        }
+    </script>
+</body>
+</html>
