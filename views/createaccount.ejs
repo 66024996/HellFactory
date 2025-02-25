@@ -82,14 +82,34 @@
             <div class="login-box">
                 <p class="tagline">Create <span style="color: #FF9B81;">Account</span></p>
                 <form>
-                    <input type="text" placeholder="Username" class="input-field">
-                    <input type="text" placeholder="First" class="input-field" style="width: 40%; margin-right: 4%;">
-                    <input type="text" placeholder="Last name" class="input-field" style="width: 40%;">
-                    <input type="email" placeholder="Email" class="input-field">
+                    <input type="text" id="username" placeholder="Username">
+                    <input type="text" id="firstName" placeholder="First Name">
+                    <input type="text" id="lastName" placeholder="Last Name">
+                    <input type="email" id="email" placeholder="Email">
+                    <input type="password" id="password" placeholder="Password">
+
                 </form>
-                <button type="submit" class="login-button">confirm</button>
+                <button onclick="register()" class="login-button">confirm</button>
             </div>
         </div>
     </div>
+    <script>
+        async function register() {
+            const username = document.getElementById("username").value;
+            const firstName = document.getElementById("firstName").value;
+            const lastName = document.getElementById("lastName").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            const response = await fetch("http://localhost:3000/createaccount", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, first_name: firstName, last_name: lastName, email, password })
+            });
+
+            const data = await response.json();
+            alert(data.message);
+        }
+    </script>
 </body>
 </html>

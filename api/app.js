@@ -2,9 +2,11 @@ const express = require("express");
 const path = require("path");
 const app = express();
 const PORT = 3000;
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
+const cors = require("cors");
 const bodyParser = require('body-parser');
 const session = require('express-session');
+const bcrypt = require("bcrypt");
 const Stripe = require('stripe');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 // const FacebookStrategy = require('passport-facebook').Strategy;
@@ -17,6 +19,9 @@ app.set("view engine", "ejs");
 app.set('views', path.join(__dirname, '../views'));
 
 app.use(express.static(path.join(__dirname, '../public')));
+app.use(cors());  
+app.use(express.json()); // ✅ รองรับ JSON
+app.use(express.urlencoded({ extended: true })); // ✅ รองรับ x-www-form-urlencoded
 
 // เส้นทางไปยังหน้าหลัก
 app.get("/", (req, res) => {
@@ -38,34 +43,27 @@ app.get("/", (req, res) => {
   
 module.exports = app;
 
-// สร้างการเชื่อมต่อ
-const connection = mysql.createConnection({
+const pool = mysql.createPool({
   host: "localhost",
   user: "root",
   password: "non1150",
   database: "phayaoplace",
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-// เชื่อมต่อ
-connection.connect((err) => {
-  if (err) {
-    console.error("Error connecting to MySQL:", err.message);
-    return;
+async function fetchUsers() {
+  try {
+    const [rows] = await pool.query("SELECT * FROM users");
+    console.log("✅ Query results:", rows);
+  } catch (err) {
+    console.error("❌ Error executing query:", err.message);
   }
-  console.log("Connected to MySQL database!");
-});
+}
 
-// ตัวอย่างการ query
-connection.query("SELECT * FROM users", (err, results) => {
-  if (err) {
-    console.error("Error executing query:", err.message);
-    return;
-  }
-  console.log("Query results:", results);
-});
+fetchUsers();
 
-// ปิดการเชื่อมต่อเมื่อเสร็จสิ้น
-connection.end();
 
 
 // ใช้ Stripe Secret Key
@@ -305,48 +303,38 @@ app.get("/createaccount", (req, res) => {
 });
 
 // เส้นทางสำหรับบันทึกบัญชีใหม่
-app.post("/createaccount", (req, res) => {
-  const { name, email, password } = req.body;
+// ✅ ลงทะเบียนผู้ใช้
+app.post("/createaccount", async (req, res) => {
+  try {
+    const { username, first_name, last_name, email, password } = req.body;
 
-  // ตรวจสอบว่าอีเมลมีอยู่แล้วหรือไม่
-  const queryCheck = "SELECT * FROM users WHERE email = ?";
-  connection.query(queryCheck, [email], (err, results) => {
-    if (err) {
-      console.error("Error checking email:", err.message);
-      res.render("createaccount", {
-        error: "เกิดข้อผิดพลาด โปรดลองอีกครั้ง",
-        success: null,
-      });
-      return;
+    if (!username || !email || !password) {
+      return res.status(400).json({ message: "กรุณากรอกข้อมูลให้ครบถ้วน!" });
     }
 
-    if (results.length > 0) {
-      // หากอีเมลมีอยู่แล้ว
-      res.render("createaccount", {
-        error: "อีเมลนี้ถูกใช้งานแล้ว",
-        success: null,
-      });
-    } else {
-      // บันทึกบัญชีใหม่
-      const queryInsert =
-        "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
-      connection.query(queryInsert, [name, email, password], (err) => {
-        if (err) {
-          console.error("Error creating account:", err.message);
-          res.render("createaccount", {
-            error: "เกิดข้อผิดพลาดในการบันทึกข้อมูล",
-            success: null,
-          });
-          return;
-        }
-        res.render("createaccount", {
-          error: null,
-          success: "สร้างบัญชีสำเร็จ! คุณสามารถเข้าสู่ระบบได้แล้ว",
-        });
-      });
-    }
-  });
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    console.log("✅ รหัสผ่านที่เข้ารหัสแล้ว:", hashedPassword);
+
+    // ✅ ใช้ connection จาก pool
+    const sql =
+      "INSERT INTO users (username, first_name, last_name, email, password) VALUES (?, ?, ?, ?, ?)";
+    const [result] = await pool.query(sql, [
+      username,
+      first_name,
+      last_name,
+      email,
+      hashedPassword,
+    ]);
+
+    res.json({ message: `บัญชีของ ${username} ถูกสร้างเรียบร้อยแล้ว!` });
+  } catch (error) {
+    console.error("❌ ERROR:", error);
+    res.status(500).json({ message: "เกิดข้อผิดพลาด!", error: error.message });
+  }
 });
+
 
 app.get("/about", (req, res) => {
   res.render("about.ejs");
