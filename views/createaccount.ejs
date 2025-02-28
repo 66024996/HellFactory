@@ -81,7 +81,7 @@
         <div class="overlay">
             <div class="login-box">
                 <p class="tagline">Create <span style="color: #FF9B81;">Account</span></p>
-                <form>
+                <form action="/createaccount" method="post">
                     <input type="text" id="username" placeholder="Username">
                     <input type="text" id="firstName" placeholder="First Name">
                     <input type="text" id="lastName" placeholder="Last Name">
@@ -101,14 +101,28 @@
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
 
-            const response = await fetch("http://localhost:3000/createaccount", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, first_name: firstName, last_name: lastName, email, password })
-            });
+            try {
+                const response = await fetch("http://localhost:3000/createaccount", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, first_name: firstName, last_name: lastName, email, password })
+                });
 
-            const data = await response.json();
-            alert(data.message);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server Error: ${response.status} - ${errorText}`);
+                }
+
+                const data = await response.json();
+                alert(data.message);
+
+                if (data.user_id) {  
+                    window.location.href = `/profile/${data.user_id}`; // ✅ เปลี่ยนหน้าไปที่โปรไฟล์
+                }
+            } catch (error) {
+                console.error("❌ Register Error:", error);
+                alert("เกิดข้อผิดพลาด: " + error.message);
+            }
         }
     </script>
 </body>

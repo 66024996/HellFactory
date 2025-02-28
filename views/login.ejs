@@ -112,9 +112,11 @@
         <div class="overlay">
             <div class="login-box">
                 <img src=".\image\โลโก้สีส้ม.png" alt="Phayao Place Logo" class="logo">
-                <form>
-                    <input type="text" placeholder="Username" class="input-field">
-                    <input type="password" placeholder="Password" class="input-field">
+                <form id="login-form" action="/login" method="POST">
+                    <input type="text" name="username" placeholder="Username" required />
+                    <input type="password" name="password" placeholder="Password" required />
+                    <button type="submit" class="login-button" id="login-btn">Login</button>
+                </form>
                     <div class="social-login">
                         <button type="button" class="social-button">
                              Google
@@ -123,13 +125,44 @@
                              Facebook
                         </button>
                     </div>
-                    <button type="submit" class="login-button">Login</button>
-                </form>
+                    
+                
                 <div class="footer-links">
                     <a href="/newpassword">forgot password?</a> or <a href="/createaccount">create account</a>
                 </div>
             </div>
         </div>
     </div>
+    <script>
+        async function login() {
+            console.log("✅ login function called!"); // Debug
+
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            try {
+                const response = await fetch("/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                console.log("✅ Login Response:", data); // Debug
+
+                if (!data.success) {
+                    throw new Error("❌ Login failed");
+                }
+
+                console.log(`✅ Redirecting to /profile/${data.userId}`);
+                window.location.href = `/profile/${data.userId}`;
+
+            } catch (error) {
+                console.error("❌ Login Error:", error);
+                alert(error.message);
+            }
+        }
+
+    </script>
 </body>
 </html>

@@ -7,6 +7,8 @@ const cors = require("cors");
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const bcrypt = require("bcrypt");
+const multer = require("multer");
+const fs = require("fs");
 const Stripe = require('stripe');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 // const FacebookStrategy = require('passport-facebook').Strategy;
@@ -20,8 +22,15 @@ app.set('views', path.join(__dirname, '../views'));
 
 app.use(express.static(path.join(__dirname, '../public')));
 app.use(cors());  
-app.use(express.json()); // ✅ รองรับ JSON
-app.use(express.urlencoded({ extended: true })); // ✅ รองรับ x-www-form-urlencoded
+app.use(express.json()); //  รองรับ JSON
+app.use(express.urlencoded({ extended: true })); //  รองรับ x-www-form-urlencoded
+const uploadDir = path.join(__dirname, "public", "uploads");
+
+// ตรวจสอบว่ามีโฟลเดอร์นี้หรือไม่ ถ้าไม่มีให้สร้างขึ้นมา
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 
 // เส้นทางไปยังหน้าหลัก
 app.get("/", (req, res) => {
@@ -64,7 +73,20 @@ async function fetchUsers() {
 
 fetchUsers();
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, "public/uploads");
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, "public/uploads/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, `user-${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
 
+const upload = multer({ storage: storage });
 
 // ใช้ Stripe Secret Key
 const stripe = Stripe('sk_test_51QkNFP07aI9JylI3vxG5J5aEIGGu3mk7aK43gXKD3yQjRp77XFvQEwYYi57t5xgDRjx8Hw9rjiwMXqNe7r1AzQyT00DVQZuBhe');
@@ -177,7 +199,7 @@ passport.use(
 //     return done(null, profile);
 // }));
 
-// เส้นทางสำหรับ Google OAuth
+//  เส้นทางสำหรับ Google OAuth
 app.get(
   "/auth/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
@@ -224,32 +246,32 @@ app.get("/login", (req, res) => {
 });
 
 // เส้นทางตรวจสอบ Login
-app.post("/login", (req, res) => {
-  const { email, password } = req.body;
-  const query = "SELECT * FROM users WHERE email = ? AND password = ?";
+app.post("/login", async (req, res) => {
+  try {
+      const { username, password } = req.body;
+      const [rows] = await pool.query("SELECT * FROM users WHERE username = ?", [username]);
 
-  connection.query(query, [email, password], (err, results) => {
-    if (err) {
-      console.error("Error executing query:", err.message);
+      if (rows.length === 0) {
+          return res.render("login", { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
+      }
+
+      const user = rows[0];
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+          return res.render("login", { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
+      }
+
+      req.session.user = user;
+      res.redirect(`/profile/${user.id}`); // ✅ เปลี่ยนเส้นทางจากฝั่ง Server
+
+  } catch (error) {
+      console.error("❌ Login Error:", error);
       res.render("login", { error: "เกิดข้อผิดพลาด โปรดลองอีกครั้ง" });
-      return;
-    }
-    if (results.length > 0) {
-      req.session.user = results[0];
-      res.redirect("/dashboard");
-    } else {
-      res.render("login", { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
-    }
-  });
+  }
 });
 
-// เส้นทาง Dashboard
-app.get("/dashboard", (req, res) => {
-  if (!req.session.user) {
-    return res.redirect("/login");
-  }
-  res.render("dashboard", { user: req.session.user });
-});
+
+
 
 // เส้นทางสำหรับแสดงหน้า newpassword
 app.get("/newpassword", (req, res) => {
@@ -302,8 +324,6 @@ app.get("/createaccount", (req, res) => {
   res.render("createaccount", { error: null, success: null });
 });
 
-// เส้นทางสำหรับบันทึกบัญชีใหม่
-// ✅ ลงทะเบียนผู้ใช้
 app.post("/createaccount", async (req, res) => {
   try {
     const { username, first_name, last_name, email, password } = req.body;
@@ -312,15 +332,21 @@ app.post("/createaccount", async (req, res) => {
       return res.status(400).json({ message: "กรุณากรอกข้อมูลให้ครบถ้วน!" });
     }
 
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    // ✅ ตรวจสอบว่า email หรือ username มีอยู่แล้วหรือไม่
+    const checkUserSQL = "SELECT id FROM users WHERE email = ? OR username = ?";
+    const [existingUser] = await pool.query(checkUserSQL, [email, username]);
 
-    console.log("✅ รหัสผ่านที่เข้ารหัสแล้ว:", hashedPassword);
+    if (existingUser.length > 0) {
+      return res.status(400).json({ message: "อีเมลหรือชื่อผู้ใช้นี้ถูกใช้งานแล้ว!" });
+    }
 
-    // ✅ ใช้ connection จาก pool
-    const sql =
+    // ✅ เข้ารหัสรหัสผ่าน
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // ✅ บันทึกลงฐานข้อมูล
+    const insertSQL =
       "INSERT INTO users (username, first_name, last_name, email, password) VALUES (?, ?, ?, ?, ?)";
-    const [result] = await pool.query(sql, [
+    const [result] = await pool.query(insertSQL, [
       username,
       first_name,
       last_name,
@@ -328,12 +354,75 @@ app.post("/createaccount", async (req, res) => {
       hashedPassword,
     ]);
 
-    res.json({ message: `บัญชีของ ${username} ถูกสร้างเรียบร้อยแล้ว!` });
+    // ✅ ส่งข้อมูลกลับไป
+    const userId = result.insertId;
+    res.json({ message: `บัญชีของ ${username} ถูกสร้างเรียบร้อยแล้ว!`, user_id: userId });
   } catch (error) {
     console.error("❌ ERROR:", error);
     res.status(500).json({ message: "เกิดข้อผิดพลาด!", error: error.message });
   }
 });
+
+app.get("/profile/:id", async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const sql = "SELECT id, username, first_name, last_name, email, phone, profile_picture FROM users WHERE id = ?";
+    const [rows] = await pool.query(sql, [userId]);
+
+    if (rows.length === 0) {
+      return res.status(404).send("ไม่พบข้อมูลผู้ใช้");
+    }
+    console.log("User data:", rows[0]); 
+    res.render("profile", { user: rows[0] });
+  } catch (error) {
+    console.error("❌ ERROR:", error);
+    res.status(500).send("เกิดข้อผิดพลาดในการโหลดโปรไฟล์");
+  }
+});
+
+app.post("/update-profile/:id", async (req, res) => {
+  try {
+    console.log("req.params.id:", req.params.id);
+    console.log("req.body:", req.body);
+
+    const userId = req.params.id;
+    const { first_name, last_name, phone } = req.body;
+
+    if (!userId) {
+      return res.status(400).send("❌ User ID ไม่ถูกต้อง");
+    }
+
+    const sql = "UPDATE users SET first_name = ?, last_name = ?, phone = ? WHERE id = ?";
+    await pool.query(sql, [first_name, last_name, phone, userId]);
+
+    res.redirect(`/profile/${userId}`);
+  } catch (error) {
+    console.error("❌ Update Error:", error);
+    res.status(500).send("เกิดข้อผิดพลาดในการอัปเดตข้อมูล");
+  }
+});
+
+
+app.post("/upload-profile", upload.single("profilePic"), async (req, res) => {
+  try {
+    console.log("req.body:", req.body);  // ✅ ตรวจสอบค่าที่ส่งมา
+
+    const userId = req.body.userId;
+    if (!userId) {
+      return res.status(400).send("❌ User ID ไม่ถูกต้อง");
+    }
+
+    const profilePicPath = `/uploads/${req.file.filename}`;
+    const sql = "UPDATE users SET profile_picture = ? WHERE id = ?";
+    await pool.query(sql, [profilePicPath, userId]);
+
+    res.redirect(`/profile/${userId}`);
+  } catch (error) {
+    console.error("❌ Upload Error:", error);
+    res.status(500).send("เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ");
+  }
+});
+
 
 
 app.get("/about", (req, res) => {
