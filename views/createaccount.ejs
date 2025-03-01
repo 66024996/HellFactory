@@ -60,8 +60,6 @@
         .login-button {
             width: 100%;
             padding: 10px;
-            padding-left: 100px;
-            padding-right: 100px;
             background: #FF9B81;
             border: none;
             border-radius: 5px;
@@ -75,21 +73,20 @@
             background: #c67865;
         }
     </style>
-</head>
+</head> 
 <body>
     <div class="background">
         <div class="overlay">
             <div class="login-box">
                 <p class="tagline">Create <span style="color: #FF9B81;">Account</span></p>
                 <form action="/createaccount" method="post">
-                    <input type="text" id="username" placeholder="Username">
-                    <input type="text" id="firstName" placeholder="First Name">
-                    <input type="text" id="lastName" placeholder="Last Name">
-                    <input type="email" id="email" placeholder="Email">
-                    <input type="password" id="password" placeholder="Password">
-
+                    <input type="text" id="username" placeholder="Username" class="input-field">
+                    <input type="text" id="firstName" placeholder="First Name" class="input-field" style="width: 40%; margin-right: 4%;">
+                    <input type="text" id="lastName" placeholder="Last Name" class="input-field" style="width: 40%;">
+                    <input type="email" id="email" placeholder="Email" class="input-field">
+                    <input type="password" id="password" placeholder="Password" class="input-field">
+                    <button type="button" onclick="register()" class="login-button">confirm</button>
                 </form>
-                <button onclick="register()" class="login-button">confirm</button>
             </div>
         </div>
     </div>
