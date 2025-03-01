@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            background: url('image/lobby.jpg') no-repeat center center/cover;
+        }
+
+        /* Navbar Styling */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 50px;
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .menu-container {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .menu-items {
+            display: flex;
+            gap: 20px;
+        }
+
+        .menu-items span {
+            cursor: pointer;
+            transition: color 0.3s ease, background-color 0.3s ease;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 18px;
+        }
+
+        .menu-items span:hover {
+            color: black;
+            background-color: #F2CC8F;
+        }
+
+        .profile-button img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            background-color: #F2CC8F;
+        }
+
+        .profile-button img:hover {
+            transform: scale(1.1);
+        }
+
+        /* Page Layout */
+        .container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10%;
+            padding: 20px;
+            margin-left: 5%;
+            margin-right: 5%;
+        }
+
+        .right-panel { /* รายละเอียด */
+            width: 40%;
+            background: rgba(255, 255, 255, 0.808);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        .stats-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .left-panel { /* แผนภูมิ */
+            width: 60%;
+            background: rgba(255, 255, 255, 0.808);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        canvas {
+            width: 100%;
+            height: 350px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <span class="brand">Phayao Place</span>
+        <div class="menu-container">
+            <div class="menu-items">
+                <span>About</span>
+                <span>Rooms</span>
+                <span>Facilities</span>
+                <span>Dining</span>
+                <span>Events</span>
+                <span>Reservation</span>
+                <span>Statistics</span>
+            </div>
+            <div class="profile-button">
+                <img src="image/user.png" alt="Profile">
+            </div>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="container">
+        <!-- Left Panel (Chart) -->
+        <div class="left-panel">
+            <h2>แผนภูมิสถิติ</h2>
+            <canvas id="statsChart"></canvas>
+        </div>
+
+        <!-- Right Panel (Details) -->
+        <div class="right-panel">
+            <h2>รายละเอียดสถิติ</h2>
+            <p>ข้อมูลรายได้และจำนวนผู้เข้าพัก</p>
+            <ul id="stats-details"></ul>
+        </div>
+    </div>
+
+    <script>
+        // ดึงข้อมูลจำลองจาก Database
+        const fetchData = async () => {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve({
+                        months: ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน"],
+                        guests: [120, 90, 130, 100, 150, 110],  // จำนวนผู้เข้าพัก
+                        revenue: [50000, 40000, 60000, 45000, 70000, 50000] // รายได้ (บาท)
+                    });
+                }, 1000);
+            });
+        };
+
+        // กำหนดสีแต่ละเดือน
+        const monthColors = [
+            "#4CAF50", // มกราคม
+            "#9C27B0", // กุมภาพันธ์
+            "#E91E63", // มีนาคม
+            "#673AB7", // เมษายน
+            "#2196F3", // พฤษภาคม
+            "#FF9800"  // มิถุนายน
+        ];
+
+        // อัปเดต UI
+        const updateUI = async () => {
+            const data = await fetchData();
+
+            // อัปเดตรายละเอียดฝั่งขวา
+            const detailsList = document.getElementById("stats-details");
+            detailsList.innerHTML = "";
+            data.months.forEach((month, index) => {
+                const listItem = document.createElement("li");
+                listItem.classList.add("stats-item");
+                listItem.style.backgroundColor = monthColors[index]; // ใช้สีเดียวกับแผนภูมิ
+                listItem.innerHTML = `<strong>${month}</strong>: ${data.guests[index]} คน, รายได้ ${data.revenue[index].toLocaleString()} บาท`;
+                detailsList.appendChild(listItem);
+            });
+
+            // สร้างแผนภูมิฝั่งซ้าย
+            const ctx = document.getElementById("statsChart").getContext("2d");
+            new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: data.months,
+                    datasets: [     
+                        {
+                            label: "รายได้ (บาท)",
+                            data: data.revenue,
+                            backgroundColor: monthColors.map(color => color + "B3"), // ทำให้สีอ่อนลงสำหรับรายได้
+                            borderRadius: 5
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        };
+
+        // โหลดข้อมูล
+        updateUI();
+    </script>
+
+</body>
+</html>
