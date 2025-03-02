@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dining</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
+  </head>
+  <style>
+    header {
+            background: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
+            color: white;
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: absolute; 
+            top: 0;
+            width: calc(100% - 0px);
+            z-index: 1000;
+        }
+        .nav-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        nav {
+            display: flex;
+            gap: 15px;
+        }
+        nav a {
+            color: white;
+            margin: 0 15px;
+            transition: color 0.3s ease, background-color 0.3s ease;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 20px;
+        }
+        nav a:hover {
+            color: black;
+            background-color: #F2CC8F;
+        }
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .profile-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #F2CC8F;
+        cursor: pointer;
+    }
+    .profile-button img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        transition: transform 0.2s ease;
+    }
+
+    .profile-button img:hover {
+        transform: scale(1.1);
+    }
+    footer {
+            background: #FF9B81;
+            color: black;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+
+        footer a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+  </style>
+  <body>
+    <header>
+      <span class="brand">Phayao Place</span>
+      <div class="nav-container">
+          <nav>
+              <a href="about">About</a>
+              <a href="rooms">Rooms</a>
+              <a href="facilities">Facilities</a>
+              <a href="dining">Dining</a>
+              <a href="reservation">Reservation</a>
+          </nav>
+          <div class="profile-button" onclick="navigateToProfile()">
+            <% if (user) { %>
+              <!-- ✅ แสดงรูปโปรไฟล์ของผู้ใช้ -->
+              <img src="<%= user.profile_picture ? user.profile_picture : '/uploads/default.png' %>" alt="Profile">
+            <% } else { %>
+              <!-- 🔴 ถ้าไม่ได้ล็อกอิน ให้แสดงปุ่ม Login -->
+              <div class="login-circle">Login</div>
+            <% } %>
+          </div>
+      </div>
+  </header>
+    <div class="relative h-[350px]">
+      <img
+        src="./image/อาหารใหญ่.jpg"
+        class="absolute inset-0 w-[1920px]  h-[500px]"
+        alt=""
+        width="1224px"
+      />
+      <div
+        class="absolute text-white text-[80px] top-[70%] left-1/2 transform -translate-x-[50%] -translate-y-[50%] "
+      >
+      DINING
+      </div>
+    </div>
+    <div class="flex gap-[100px]  mt-[200px] w-[100%] justify-center">
+      <div class="w-[600px] flex flex-col items-center justify-center gap-[300px]">
+        <img src="./image/Dining.png" alt="">
+        <img src="./image/Diningg.png" alt="">
+      </div>
+      <div>
+        <div class="font-normal text-[50px]">RESTAURANT</div>
+        <div class="font-light text-gray-400 w-[550px] mt-[50px] text-[30px] ">
+          Starting from June 1, 2024, BRICK LANE restaurant located on the ground floor of The Pier will introduce a new breakfast service exclusively for the hotel's in-house guests. Visitors can look forwarding to experiencing delectable culinary while enjoying the restaurant's breathtaking seascape views.
+
+          <div class="pl-[0.1rem] text-[29px] ">The breakfast service will be available daily from 8am- 11 am, with the last order accepted at 10:15am.</div>
+
+          <div class="pl-[0.1rem] text-[29px]">*Only serves breakfast hours till 11am.</div>
+
+          <div class="pl-[0.1rem] text-[29px]">DINING EXPERIENCE</div> 
+
+          <div class="pl-[0.1rem] text-[29px]">THE PIER partners with BRICK LANE to offer an exclusive private dining room catering service. This intimate setting is perfect for small gatherings, birthdays, or business functions. The meticulously crafted BRICK LANE menu allows guests to savor delicious cuisine, complemented by the stunning Pak Sha Wan sea view. This creates the ideal atmosphere for celebratory occasions and special events. Elevate your next gathering with our exceptional private dining experience.</div>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <p>&copy; 2025 Phayao Place. All Rights Reserved.</p>
+      <p>
+          <a href="#privacy">Privacy Policy</a> |
+          <a href="#terms">Terms of Service</a> |
+          <a href="#contact">Contact Us</a>
+      </p>
+  </footer>
+  <script>
+    function navigateToProfile() {
+      const profileButton = document.querySelector(".profile-button");
+
+      console.log("Profile Button:", profileButton); // ✅ ตรวจสอบว่ามีค่าไหม
+
+      if (!profileButton) {
+        alert("❌ Profile button not found!");
+        return;
+      }
+
+      const userId = profileButton.getAttribute("data-user-id");
+      console.log("User ID:", userId); // ✅ เช็คค่าที่ดึงมา
+
+      if (userId) {
+        window.location.href = `/profile/${userId}`;
+      } else {
+        window.location.href = "/login";
+      }
+    }
+  </script>
+
+  </body>
+</html>
