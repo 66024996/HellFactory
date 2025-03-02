@@ -18,7 +18,7 @@
         header {
             background: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
             color: white;
-            padding: 20px 40px;
+            padding: 30px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -27,24 +27,51 @@
             width: calc(100% - 80px);
             z-index: 1000;
         }
-
-        nav {
-            position: sticky; 
-            top: 0; 
-            z-index: 1000;
+        .nav-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
-
+        nav {
+            display: flex;
+            gap: 15px;
+        }
         nav a {
             color: white;
             margin: 0 15px;
-            text-decoration: none;
-            font-size: 1em;
-            transition: color 0.6s;
+            transition: color 0.3s ease, background-color 0.3s ease;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 20px;
         }
-
         nav a:hover {
-            color: #f39c12;
+            color: black;
+            background-color: #F2CC8F;
         }
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .profile-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #F2CC8F;
+        cursor: pointer;
+    }
+    .profile-button img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        transition: transform 0.2s ease;
+    }
+
+    .profile-button img:hover {
+        transform: scale(1.1);
+    }
 
         .header-image {
             background-image: url('./image/ภาพเลื่อนหน้า Rooms.jpg'); 
@@ -123,15 +150,19 @@
 <body>
     <!-- Navbar Section -->
     <header>
-        <div class="logo">Phayao Place</div>
-        <nav>
-            <a href="about">About</a>
-            <a href="rooms">Rooms</a>
-            <a href="facilities">Facilities</a>
-            <a href="dining">Dining</a>
-            <a href="offer">Offer</a>
-            <a href="reservation">Reservation</a>
-        </nav>
+        <span class="brand">Phayao Place</span>
+        <div class="nav-container">
+            <nav>
+                <a href="about">About</a>
+                <a href="rooms">Rooms</a>
+                <a href="facilities">Facilities</a>
+                <a href="dining">Dining</a>
+                <a href="reservation">Reservation</a>
+            </nav>
+            <div class="profile-button" onclick="navigateToProfile()">
+                <img src="image/user.png" alt="Profile">
+            </div>
+        </div>
     </header>
 
     <!-- Header Image Section -->
@@ -140,7 +171,7 @@
 
     <!-- Reservation Details -->
     <div class="reservation-details">
-        <div class="details-content" onclick="goToPage('superior_terrace')">
+        <div class="details-content" onclick="goToPage('roomS')">
             <img src="./image/ห้องนอน(5).png" alt="Room Image">
             <div>
                 <h1>SUPERIOR TERRACE</h1>
@@ -154,7 +185,7 @@
                 <p>- Free local call</p>
             </div>
         </div>
-        <div class="details-content" onclick="goToPage('deluxe_terrace')">
+        <div class="details-content" onclick="goToPage('roomS')">
             <div>
                 <h1>DELUXE TERRACE</h1>
                 <p>Deluxe Terrace are blessed with exquisite views of the private terrace that flourish the Pier Hotel. Made with a touch of voyager taste, the Deluxe Terrace are known best for the relaxation they bring to an explorer like you.</p>
@@ -169,7 +200,7 @@
             </div>
             <img src="./image/ห้องนอน(5).png" alt="Room Image">
         </div>
-        <div class="details-content" onclick="goToPage('ocean_front_terrace')">
+        <div class="details-content" onclick="goToPage('roomS')">
             <img src="./image/ห้องนอน(5).png" alt="Room Image">
             <div>
                 <h1>OCEAN FRONT TERRACE</h1>
@@ -184,7 +215,7 @@
                 <p>- Free local call</p>
             </div>
         </div>
-        <div class="details-content" onclick="goToPage('premium_ocean_front_terrace')">
+        <div class="details-content" onclick="goToPage('roomS')">
             <div>
                 <h1>PREMIUM OCEAN FRONT TERRACE</h1>
                 <p>Indulge yourself with contemporary comforts in the luxurious Premium Ocean Front Terrace, a bright and airy haven to uplift your body and spirit. Luxuriate in the deep-soaking bathtub, and feel the soft sea breeze from the floor-to-ceiling window.</p>
@@ -195,7 +226,7 @@
                 <p>- Shower cubicle & in-room single bathtub</p>
                 <p>- Complimentary Wi-Fi access</p>
                 <p>- Washing & drying unit</p>
-                <p>- Free local call.</p>
+                <p>- Free local call</p>
             </div>
             <img src="./image/ห้องนอน(5).png" alt="Room Image">
         </div>
@@ -209,6 +240,6 @@
             <a href="#terms">Terms of Service</a> |
             <a href="#contact">Contact Us</a>
         </p>
-    </footer>A
+    </footer>
 </body>
 </html>

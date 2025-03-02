@@ -128,7 +128,7 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
-            gap: 15px;/
+            gap: 15px;
         }
 
         .details-content {
@@ -184,17 +184,58 @@
                     method: 'POST',
                     body: formData
                 });
+
                 const data = await response.json();
                 if (data.success) {
                     alert("อัปโหลดสลิปสำเร็จ กำลังตรวจสอบการชำระเงิน");
                     checkPaymentStatus(data.referenceId);
+                
                 } else {
                     alert("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
                 }
             } catch (error) {
                 console.error("เกิดข้อผิดพลาดในการอัปโหลด:", error);
             }
+        }   
+
+        async function checkPaymentStatus(referenceId) {
+            try {
+                const response = await fetch(`/check-payment/${referenceId}`);
+                const data = await response.json();
+        
+                if (data.success) {
+                    alert(`สถานะการชำระเงิน: ${data.status}`);
+            
+                    if (data.status === 'approved') {
+                        sendPaymentEmail(data.email, data.referenceId, data.status);
+                    }
+                } else {
+                    alert("ไม่พบข้อมูลการชำระเงิน");
+                }
+            } catch (error) {
+                console.error("เกิดข้อผิดพลาดในการตรวจสอบการชำระเงิน:", error);
+            }
         }
+
+        async function sendPaymentEmail(email, referenceId, status) {
+            try {
+                const response = await fetch('/send-payment-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, referenceId, status })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert(`อีเมลแจ้งเตือนถูกส่งไปยัง ${email} สำเร็จ`);
+                } else {
+                    alert("เกิดข้อผิดพลาดในการส่งอีเมล");
+                }
+            } catch (error) {
+                console.error("เกิดข้อผิดพลาดในการส่งอีเมล:", error);
+            }
+        }
+        
     </script>
 </head>
 <body>

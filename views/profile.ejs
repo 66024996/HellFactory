@@ -14,13 +14,72 @@
             height: 100vh;
             margin: 0;
         }
-        .profile-container {
-            background: rgba(0, 0, 0, 0.7);
+        header {
+            background: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
             color: white;
-            padding: 20px;
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: absolute; 
+            top: 0;
+            width: calc(100% - 80px);
+            z-index: 1000;
+        }
+        .nav-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        nav {
+            display: flex;
+            gap: 15px;
+        }
+        nav a {
+            color: white;
+            margin: 0 15px;
+            transition: color 0.3s ease, background-color 0.3s ease;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 20px;
+        }
+        nav a:hover {
+            color: black;
+            background-color: #F2CC8F;
+        }
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .profile-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #F2CC8F;
+        cursor: pointer;
+    }
+    .profile-button img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        transition: transform 0.2s ease;
+    }
+
+    .profile-button img:hover {
+        transform: scale(1.1);
+    }
+
+        .profile-container {
+            color: white;
+            display: flex;
+            padding: 30px;
             border-radius: 15px;
-            text-align: center;
-            width: 400px;
+            max-width: 1000px;
+            width: 90%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         .profile-pic {
             width: 150px;
@@ -43,20 +102,185 @@
         .edit-form {
             display: none;
         }
-        .logout-button, .edit-button, .save-button {
+        .left-section {
+            text-align: center;
             padding: 10px;
+            width: 30%;
+        }
+
+        .left-section img {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            margin-bottom: 20px;
+            object-fit: cover;
+            background: gray;
+            border: 3px solid #004367;
+        }
+        .right-section {
+            flex-grow: 1;
+            padding: 40px;
+            border-radius: 10px;
+            margin-top: 70px;
+            margin-left: 20px;
+        }
+        .form-input {
+            margin-bottom: 15px;
+        }
+
+        .form-input label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .form-input input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #cccccc9d;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            background-color: rgba(255, 255, 255, 0.372);
+        }
+        .edit-button, .save-button {
+            padding: 15px;
             margin-top: 10px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
         }
-        .logout-button { background: red; color: white; }
-        .edit-button, .save-button { background: #F2CC8F; color: black; }
+        .form-input{
+            margin-bottom: 15px;
+        }
+        .edit-button, .save-button { 
+            background: #F2CC8F; color: black; 
+        }
+        .logout-button {
+            position: absolute;
+            top: 120px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .logout-button img {
+            width: 75%;
+            height: 75%;
+            transition: transform 0.2s ease;
+        }
+
+        .logout-button img:hover {
+            transform: scale(1.1);
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .popup-content {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            width: 500px;
+            height: 200px;
+            color: black;
+        }
+
+        .popup-content p {
+            font-size: 18px;
+            margin-bottom: 20px;
+            margin-top: 50px;
+        }
+
+        .popup-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .btn-cancel,
+        .btn-confirm {
+            flex: 1;
+            padding: 15px 10px;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .btn-cancel {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-cancel:hover {
+            background: #c0c0c0;
+        }
+
+        .btn-confirm {
+            background: #f2cc8f;
+            color: white;
+        }
+
+        .btn-confirm:hover {
+            background: #daa55d;
+        }
     </style>
 </head>
 <body>
+    <header>
+        <span class="brand">Phayao Place</span>
+        <div class="nav-container">
+            <nav>
+                <a href="about">About</a>
+                <a href="rooms">Rooms</a>
+                <a href="facilities">Facilities</a>
+                <a href="dining">Dining</a>
+                <a href="reservation">Reservation</a>
+            </nav>
+            <div class="profile-button" onclick="navigateToProfile()">
+                <img src="image/user.png" alt="Profile">
+            </div>
+        </div>
+    </header>    
+    
     <div class="profile-container">
+        <button class="logout-button" onclick="logout()">
+            <img src="image/log-out.png" alt="Logout">
+        </button>
+        <div id="logout-popup" class="popup-overlay hidden">
+            <div class="popup-content">
+                <p>คุณต้องการออกจากระบบใช่หรือไม่?</p>
+                <div class="popup-actions">
+                    <button class="btn-cancel" onclick="hideLogoutPopup()">ยกเลิก</button>
+                    <button class="btn-confirm" onclick="confirmLogout()">ออกจากระบบ</button>
+                </div>
+            </div>
+        </div>  
+        <div class="left-section">
         <h2>โปรไฟล์ของ <%= user.username %></h2>
+        
         
         <!-- รูปโปรไฟล์ -->
         <img src="<%= user.profile_picture ? user.profile_picture : '/uploads/default.png' %>" 
@@ -68,36 +292,50 @@
             <input type="hidden" name="userId" value="<%= user.id %>"> <!-- ✅ ต้องมีค่า -->
             <button type="submit" class="edit-button">อัปโหลดรูป</button>
         </form>
+        <div class="info-box"> <%= user.first_name %> <%= user.last_name %></div>
+    </div>
         
-        
-        
-
-        <div class="info-box"><b>ชื่อ:</b> <%= user.first_name %> <%= user.last_name %></div>
-        <div class="info-box"><b>อีเมล:</b> <%= user.email %></div>
-        <div class="info-box"><b>เบอร์โทร:</b> <%= user.phone || "ยังไม่ได้ระบุ" %></div>
-
+    <div class="right-section">
+        <div class="info-box"><b>Email :</b> <%= user.email %></div>
+        <div class="info-box"><b>Tel.  :</b> <%= user.phone || "ยังไม่ได้ระบุ" %></div>
         <button class="edit-button" onclick="toggleEdit()">แก้ไขข้อมูล</button>
-
         <!-- ฟอร์มแก้ไขข้อมูล -->
         <form action="/update-profile/<%= user.id %>" method="POST" class="edit-form" id="editForm">
+            <div class="form-input">
+            <label for="name">First name</label>
             <input type="text" name="first_name" value="<%= user.first_name %>">
+            <label for="name">Surname</label>
             <input type="text" name="last_name" value="<%= user.last_name %>">
+            <label for="name">Email</label>
             <input type="text" name="phone" value="<%= user.phone || '' %>">
+            <label for="name">Tel.</label>
             <input type="text" name="email" value="<%= user.email || '' %>">
+        </div>
             <button type="submit" class="save-button">บันทึก</button>
         </form>
-
-        <button class="logout-button" onclick="logout()">ออกจากระบบ</button>
+    </div>  
     </div>
 
     <script>
+        function navigateToProfile() {
+            window.location.href = "profile";
+        }
         function toggleEdit() {
             const form = document.getElementById('editForm');
             form.style.display = form.style.display === 'block' ? 'none' : 'block';
         }
 
         function logout() {
-            window.location.href = "/";
+            document.getElementById('logout-popup').classList.remove('hidden');
+        }
+
+        function hideLogoutPopup() {
+            document.getElementById('logout-popup').classList.add('hidden');
+        }
+
+        function confirmLogout() {
+            alert('คุณได้ออกจากระบบแล้ว');
+            window.location.href = '/login';
         }
     </script>
 </body>

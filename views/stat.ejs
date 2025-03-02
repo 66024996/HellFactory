@@ -15,62 +15,63 @@
         }
 
         /* Navbar Styling */
-        .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(0, 0, 0, 0.7);
+        header {
+            background: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
             color: white;
+            padding: 30px 40px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            padding: 20px 50px;
-            box-sizing: border-box;
+            align-items: center;
+            position: absolute; 
+            top: 0;
+            width: calc(100% - 80px);
             z-index: 1000;
         }
-
+        .nav-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        nav {
+            display: flex;
+            gap: 15px;
+        }
+        nav a {
+            color: white;
+            margin: 0 15px;
+            transition: color 0.3s ease, background-color 0.3s ease;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 20px;
+        }
+        nav a:hover {
+            color: black;
+            background-color: #F2CC8F;
+        }
         .brand {
             font-size: 24px;
             font-weight: bold;
         }
+        .profile-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #F2CC8F;
+        cursor: pointer;
+    }
+    .profile-button img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        transition: transform 0.2s ease;
+    }
 
-        .menu-container {
-            display: flex;
-            align-items: center;
-            gap: 30px;
-        }
-
-        .menu-items {
-            display: flex;
-            gap: 20px;
-        }
-
-        .menu-items span {
-            cursor: pointer;
-            transition: color 0.3s ease, background-color 0.3s ease;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-size: 18px;
-        }
-
-        .menu-items span:hover {
-            color: black;
-            background-color: #F2CC8F;
-        }
-
-        .profile-button img {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-            background-color: #F2CC8F;
-        }
-
-        .profile-button img:hover {
-            transform: scale(1.1);
-        }
+    .profile-button img:hover {
+        transform: scale(1.1);
+    }
 
         /* Page Layout */
         .container {
@@ -115,23 +116,21 @@
 <body>
 
     <!-- Navbar -->
-    <div class="navbar">
+    <header>
         <span class="brand">Phayao Place</span>
-        <div class="menu-container">
-            <div class="menu-items">
-                <span>About</span>
-                <span>Rooms</span>
-                <span>Facilities</span>
-                <span>Dining</span>
-                <span>Events</span>
-                <span>Reservation</span>
-                <span>Statistics</span>
-            </div>
-            <div class="profile-button">
+        <div class="nav-container">
+            <nav>
+                <a href="about">About</a>
+                <a href="rooms">Rooms</a>
+                <a href="facilities">Facilities</a>
+                <a href="dining">Dining</a>
+                <a href="reservation">Reservation</a>
+            </nav>
+            <div class="profile-button" onclick="navigateToProfile()">
                 <img src="image/user.png" alt="Profile">
             </div>
         </div>
-    </div>
+    </header>
 
     <!-- Content -->
     <div class="container">
@@ -150,6 +149,9 @@
     </div>
 
     <script>
+        function navigateToProfile() {
+            window.location.href = "profile";
+        }
         // ดึงข้อมูลจำลองจาก Database
         const fetchData = async () => {
             return new Promise((resolve) => {

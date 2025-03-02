@@ -15,29 +15,62 @@
 
         /* Navbar Section */
         header {
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
             color: white;
-            padding: 30px 8px;
+            padding: 30px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: fixed;
+            position: absolute; 
             top: 0;
-            width: 99%;
+            width: calc(100% - 80px);
             z-index: 1000;
         }
-
+        .nav-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        nav {
+            display: flex;
+            gap: 15px;
+        }
         nav a {
             color: white;
             margin: 0 15px;
-            text-decoration: none;
-            font-size: 1em;
-            transition: color 0.6s;
+            transition: color 0.3s ease, background-color 0.3s ease;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 20px;
         }
-
         nav a:hover {
-            color: #f39c12;
+            color: black;
+            background-color: #F2CC8F;
         }
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .profile-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #F2CC8F;
+        cursor: pointer;
+    }
+    .profile-button img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        transition: transform 0.2s ease;
+    }
+
+    .profile-button img:hover {
+        transform: scale(1.1);
+    }
 
         .header-image {
             background-image: url('./image/ภาพหน้า Reservasion.jpg');
@@ -178,7 +211,11 @@
             text-decoration: underline;
         }
     </style>
+    
     <script>
+        function navigateToProfile() {
+            window.location.href = "profile";
+        }
         const rooms = [
             { name: 'Superior Terrace', size: '34.4m²', sleeps: '2', bed: '1 Queen bed', price: 2592.00 },
             { name: 'Deluxe Terrace', size: '46.1m²', sleeps: '2', bed: '1 King bed', price: 3592.00 },
@@ -236,14 +273,19 @@
 <body>
     <!-- Navbar Section -->
     <header>
-        <div class="logo">Phayao Place</div>
-        <nav>
-            <a href="about">About</a>
-            <a href="rooms">Rooms</a>
-            <a href="facilities">Facilities</a>
-            <a href="dining">Dining</a>
-            <a href="reservation">Reservation</a>
-        </nav>
+        <span class="brand">Phayao Place</span>
+        <div class="nav-container">
+            <nav>
+                <a href="about">About</a>
+                <a href="rooms">Rooms</a>
+                <a href="facilities">Facilities</a>
+                <a href="dining">Dining</a>
+                <a href="reservation">Reservation</a>
+            </nav>
+            <div class="profile-button" onclick="navigateToProfile()">
+                <img src="image/user.png" alt="Profile">
+            </div>
+        </div>
     </header>
 
     <!-- Header Image Section -->

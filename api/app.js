@@ -8,7 +8,11 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const bcrypt = require("bcrypt");
 const multer = require("multer");
+const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
 const fs = require("fs");
+const { checkPaymentStatus } = require('./paymentService');
+
 const Stripe = require('stripe');
 const QRCode = require("qrcode");
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
@@ -30,8 +34,19 @@ const uploadDir = path.join(__dirname, "public", "uploads");
 // ตรวจสอบว่ามีโฟลเดอร์นี้หรือไม่ ถ้าไม่มีให้สร้างขึ้นมา
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
-}
 
+}
+// require('dotenv').config();
+// const SECRET_KEY = process.env.SECRET_KEY;
+// const FRONTEND_URL = process.env.FRONTEND_URL;
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+      user: 'staythenon@gmail.com',   // ✨ เปลี่ยนเป็นอีเมลของคุณ
+      pass: 'vhjx jccc hlyz bxej'     // ✨ ใส่รหัสผ่าน (หรือ App Password ของ Gmail)
+  }
+});
 
 // เส้นทางไปยังหน้าหลัก
 app.get("/", (req, res) => {
@@ -346,9 +361,10 @@ app.post("/createaccount", async (req, res) => {
     // ✅ เข้ารหัสรหัสผ่าน
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ บันทึกลงฐานข้อมูล
-    const insertSQL =
-      "INSERT INTO users (username, first_name, last_name, email, password) VALUES (?, ?, ?, ?, ?)";
+    // ✅ สร้างบัญชีใหม่ (is_verified = false)
+    const insertSQL = `
+      INSERT INTO users (username, first_name, last_name, email, password, is_verified) 
+      VALUES (?, ?, ?, ?, ?, 0)`;
     const [result] = await pool.query(insertSQL, [
       username,
       first_name,
@@ -357,12 +373,64 @@ app.post("/createaccount", async (req, res) => {
       hashedPassword,
     ]);
 
-    // ✅ ส่งข้อมูลกลับไป
     const userId = result.insertId;
-    res.json({ message: `บัญชีของ ${username} ถูกสร้างเรียบร้อยแล้ว!`, user_id: userId });
+
+    // ✅ สร้างโทเค็นสำหรับการยืนยัน
+    const verificationToken = jwt.sign({ userId, email }, SECRET_KEY, { expiresIn: "1d" });
+
+    // ✅ ส่งอีเมลยืนยัน
+    const verificationLink = `${FRONTEND_URL}/verify?token=${verificationToken}`;
+    await sendVerificationEmail(email, verificationLink);
+
+    res.json({
+      message: `บัญชีของ ${username} ถูกสร้างเรียบร้อยแล้ว! กรุณาตรวจสอบอีเมลของคุณเพื่อยืนยันบัญชี`,
+      user_id: userId,
+    });
   } catch (error) {
     console.error("❌ ERROR:", error);
     res.status(500).json({ message: "เกิดข้อผิดพลาด!", error: error.message });
+  }
+});
+
+// ✅ ฟังก์ชันส่งอีเมล
+async function sendVerificationEmail(toEmail, link) {
+  let transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "staythenon@gmail.com", // เปลี่ยนเป็นอีเมลของคุณ
+      pass: "0955784172zx", // เปลี่ยนเป็นรหัสผ่านของคุณ
+    },
+  });
+
+  await transporter.sendMail({
+    from: '"Phayao Place" <staythenon@gmail.com>',
+    to: toEmail,
+    subject: "ยืนยันบัญชีของคุณ",
+    html: `<p>คลิกลิงก์นี้เพื่อยืนยันบัญชีของคุณ:</p>
+           <a href="${link}">${link}</a>`,
+  });
+}
+
+// ✅ API ยืนยันบัญชี
+app.get("/verify", async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({ message: "Token ไม่ถูกต้อง" });
+    }
+
+    // ✅ ตรวจสอบโทเค็น
+    const { userId } = jwt.verify(token, SECRET_KEY);
+
+    // ✅ อัปเดตฐานข้อมูลให้ is_verified = true
+    const updateSQL = "UPDATE users SET is_verified = 1 WHERE id = ?";
+    await pool.query(updateSQL, [userId]);
+
+    res.json({ message: "บัญชีของคุณได้รับการยืนยันแล้ว!" });
+  } catch (error) {
+    console.error("❌ ERROR:", error);
+    res.status(400).json({ message: "Token ไม่ถูกต้องหรือหมดอายุ!" });
   }
 });
 
@@ -441,66 +509,85 @@ app.get('/payment', (req, res) => {
 });
 
 app.post('/payment', (req, res) => {
-    const { amount, method } = req.body;
-
-    if (!amount || !method) {
-        res.render('payment', { message: 'Please fill out all fields!' });
-    } else {
-        // Handle payment logic here
-        console.log(`Payment received: ${amount} via ${method}`);
-        res.render('payment', { message: 'Payment successful!' });
-    }
+  const { amount, method } = req.body;
+  if (!amount || !method) {
+      return res.json({ success: false, message: 'กรุณากรอกจำนวนเงินและวิธีการชำระเงิน' });
+  }
+  console.log(`ได้รับการชำระเงิน: ${amount} ผ่าน ${method}`);
+  res.json({ success: true, message: 'การชำระเงินสำเร็จ!' });
 });
 
+// อัปโหลดสลิป
+app.post('/upload-slip', upload.single('slip'), (req, res) => {
+  if (!req.file) {
+      return res.json({ success: false, message: 'ไม่มีไฟล์ที่อัปโหลด' });
+  }
+  console.log('ไฟล์ที่อัปโหลด:', req.file.filename);
+  res.json({ success: true, referenceId: req.file.filename });
+});
+
+// API ตรวจสอบสถานะการชำระเงิน
+app.get('/check-payment/:referenceId', async (req, res) => {
+  try {
+      const connection = await pool.getConnection();
+      const [rows] = await connection.execute('SELECT email, status FROM payments WHERE referenceId = ?', [req.params.referenceId]);
+      connection.release();
+
+      if (rows.length === 0) {
+          return res.status(404).json({ success: false, message: 'ไม่พบข้อมูลการชำระเงิน' });
+      }
+
+      const { email, status } = rows[0];
+
+      // ✅ **ส่งอีเมลแจ้งเตือน**
+      const mailOptions = {
+          from: 'staythenon@gmail.com',
+          to: email,  // ✨ ใช้อีเมลจากฐานข้อมูล
+          subject: 'แจ้งผลการตรวจสอบชำระเงิน',
+          text: `สถานะการชำระเงินของคุณ: ${status}\n\nขอบคุณที่ใช้บริการ!`
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+              console.error('❌ ส่งอีเมลล้มเหลว:', error);
+          } else {
+              console.log('📧 อีเมลถูกส่งไปที่:', info.response);
+          }
+      });
+
+      res.json({ 
+          success: true, 
+          status, 
+          message: 'ตรวจสอบการชำระเงินเสร็จสิ้น และส่งอีเมลแจ้งเตือนเรียบร้อย' 
+      });
+
+  } catch (error) {
+      res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด', error });
+  }
+});
+
+// ✅ **API อัปเดตสถานะการชำระเงิน (สำหรับ Admin)**
+app.put('/update-payment/:id', async (req, res) => {
+  const { status } = req.body;
+  if (!['pending', 'approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'สถานะไม่ถูกต้อง' });
+  }
+  try {
+      const connection = await pool.getConnection();
+      const [result] = await connection.execute('UPDATE payments SET status = ? WHERE id = ?', [status, req.params.id]);
+      connection.release();
+
+      if (result.affectedRows === 0) {
+          return res.status(404).json({ success: false, message: 'ไม่พบข้อมูลการชำระเงิน' });
+      }
+      res.json({ success: true, message: 'อัปเดตสถานะสำเร็จ' });
+  } catch (error) {
+      res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด', error });
+  }
+});
 app.listen(PORT, () => {
   console.log("server is running on port " + PORT)
 })
-
-app.post("/create-bill", (req, res) => {
-  const { userId, amount, dueDate } = req.body;
-  db.query(
-      "INSERT INTO bills (user_id, amount, due_date, status) VALUES (?, ?, ?, 'pending')",
-      [userId, amount, dueDate],
-      (err, results) => {
-          if (err) return res.status(500).json(err);
-          res.json({ message: "บันทึกบิลสำเร็จ", billId: results.insertId });
-      }
-  );
-});
-
-app.post("/update-payment", (req, res) => {
-  const { billId, transactionId } = req.body;
-  db.query("UPDATE bills SET status = 'paid', transaction_id = ?, paid_at = NOW() WHERE id = ?", 
-      [transactionId, billId], 
-      (err, result) => {
-          if (err) return res.status(500).json({ error: err.message });
-          res.json({ message: "✅ Payment successful!" });
-      }
-  );
-});
-
-app.post("/webhook-payment", (req, res) => {
-  const { transactionId, billId, status } = req.body;
-
-  if (status === "success") {
-      db.query("UPDATE bills SET status = 'paid' WHERE id = ?", [billId]);
-      console.log(`บิล ${billId} ชำระเงินเรียบร้อย`);
-  }
-
-  res.sendStatus(200);
-});
-
-// app.get("/get-bill-status", (req, res) => {
-//   const { billId } = req.query;
-//   db.query("SELECT status FROM bills WHERE id = ?", [billId], (err, results) => {
-//       if (err) return res.status(500).json({ error: err.message });
-//       if (results.length > 0) {
-//           res.json({ status: results[0].status });
-//       } else {
-//           res.status(404).json({ error: "ไม่พบบิล" });
-//       }
-//   });
-// });
 
 app.get("/room", (req, res) => {
   res.render("room"); // สมมติว่าใช้ EJS
