@@ -48,7 +48,7 @@
             margin-bottom: 20px;
         }
         .input-field {
-            width: 100%;
+            width: 95%;
             padding: 10px;
             margin: 10px 0;
             border: none;
@@ -56,8 +56,6 @@
             font-size: 1em;
             background: rgba(133, 122, 122, 0.777);
             color: #ffffff;
-            justify-content: center;
-            align-items: center;
         }
         .input-field::placeholder {
             color: rgba(255, 255, 255, 0.7);
@@ -71,7 +69,7 @@
             color: white;
             font-size: 1em;
             cursor: pointer;
-            margin-top: 50px;
+            margin-top: 20px;
             text-align: center;
         }
         .login-button:hover {
@@ -90,9 +88,11 @@
         }
         .social-login {
             margin-top: 15px;
+            margin-right: 10%;
+            margin-left: 10%;
         }
         .social-button {
-            width: 250px;
+            width: 100%;
             padding: 10px;
             margin-top: 30px;
             background: rgba(133, 122, 122, 0.777);
@@ -101,9 +101,7 @@
             color: black;
             font-size: 1em;
             cursor: pointer;
-            display: flex;
-            margin-left: 20%;
-            justify-content: center;
+            text-align: center;
         }
     </style>
 </head>
@@ -111,22 +109,16 @@
     <div class="background">
         <div class="overlay">
             <div class="login-box">
-                <img src=".\image\โลโก้สีส้ม.png" alt="Phayao Place Logo" class="logo">
+                <img src="./image/โลโก้สีส้ม.png" alt="Phayao Place Logo" class="logo">
                 <form id="login-form" action="/login" method="POST">
-                    <input type="text" name="username" placeholder="Username" required />
-                    <input type="password" name="password" placeholder="Password" required />
+                    <input type="text" name="username" placeholder="Username" required class="input-field" />
+                    <input type="password" name="password" placeholder="Password" required class="input-field" />
                     <button type="submit" class="login-button" id="login-btn">Login</button>
                 </form>
-                    <div class="social-login">
-                        <button type="button" class="social-button">
-                             Google
-                        </button>
-                        <button type="button" class="social-button">
-                             Facebook
-                        </button>
-                    </div>
-                    
-                
+                <div class="social-login">
+                    <button type="button" class="social-button">Google</button>
+                    <button type="button" class="social-button">Facebook</button>
+                </div>
                 <div class="footer-links">
                     <a href="/newpassword">forgot password?</a> or <a href="/createaccount">create account</a>
                 </div>
@@ -135,34 +127,27 @@
     </div>
     <script>
         async function login() {
-            console.log("✅ login function called!"); // Debug
-
+            console.log("✅ login function called!");
             const username = document.getElementById("username").value;
             const password = document.getElementById("password").value;
-
             try {
                 const response = await fetch("/login", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ username, password })
                 });
-
                 const data = await response.json();
-                console.log("✅ Login Response:", data); // Debug
-
+                console.log("✅ Login Response:", data);
                 if (!data.success) {
                     throw new Error("❌ Login failed");
                 }
-
                 console.log(`✅ Redirecting to /profile/${data.userId}`);
                 window.location.href = `/profile/${data.userId}`;
-
             } catch (error) {
                 console.error("❌ Login Error:", error);
                 alert(error.message);
             }
         }
-
     </script>
 </body>
 </html>
