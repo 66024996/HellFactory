@@ -436,6 +436,14 @@ app.get("/Facilities", (req, res) => {
   res.render("Facilities.ejs");
 });
 
+app.get("/Dining", (req, res) => {
+  res.render("Dining.ejs");
+});
+
+app.get("/Events", (req, res) => {
+  res.render("Events.ejs");
+});
+
 app.get('/payment', (req, res) => {
     res.render('payment', { message: null }); // Pass a default message
 });
