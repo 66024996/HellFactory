@@ -160,24 +160,41 @@
             const methods = document.querySelectorAll('.payment-method');
             methods.forEach(method => method.classList.remove('selected'));
             event.currentTarget.classList.add('selected');
-        }
 
-        async function checkPaymentStatus(billId) {
-            try {
-                const response = await fetch(`/get-bill-status?billId=${billId}`);
-                const data = await response.json();
-                
-                if (data.status === "paid") {
-                    document.querySelector(".confirm-button").innerText = "ชำระเงินสำเร็จ ✅";
-                    document.querySelector(".confirm-button").style.background = "#2ecc71";
-                } else {
-                    alert("ยังไม่ได้รับการชำระเงิน กรุณาลองใหม่อีกครั้ง");
-                }
-            } catch (error) {
-                console.error("เกิดข้อผิดพลาด:", error);
+            // แสดง QR Code หากเลือก QR Payment
+            if (event.currentTarget.id === 'qr-payment') {
+                document.getElementById('qr-code-section').style.display = 'block';
+            } else {
+                document.getElementById('qr-code-section').style.display = 'none';
             }
         }
-        setInterval(() => checkPaymentStatus(123), 5000); // ตรวจสอบทุก 5 วินาที
+
+        async function uploadSlip() {
+            const fileInput = document.getElementById('slip-upload');
+            if (!fileInput.files.length) {
+                alert("กรุณาอัปโหลดสลิปก่อนยืนยันการชำระเงิน");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('slip', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/upload-slip', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert("อัปโหลดสลิปสำเร็จ กำลังตรวจสอบการชำระเงิน");
+                    checkPaymentStatus(data.referenceId);
+                } else {
+                    alert("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
+                }
+            } catch (error) {
+                console.error("เกิดข้อผิดพลาดในการอัปโหลด:", error);
+            }
+        }
     </script>
 </head>
 <body>
@@ -216,7 +233,18 @@
                 <img src="./image/credit-card.png" alt="Credit Card">
                 <span>Credit Card</span>
             </div>
-            <div class="confirm-button" onclick="checkPaymentStatus(123)">ยืนยันการชำระเงิน</div>
+            <div class="payment-method" onclick="selectMethod(event)" id="qr-payment">
+                <img src="./image/qr-code.png" alt="QR Code">
+                <span>โอนเงินผ่าน QR Code</span>
+            </div>
+            
+            <!-- QR Code Display & Upload Slip -->
+            <div id="qr-code-section" style="display: none; text-align: center; margin-top: 15px;">
+                <img src="./image/my-qrcode.jpg" alt="QR Code" style="width: 300px; height: 450px;">
+                <p>สแกน QR Code เพื่อโอนเงิน</p>
+                <input type="file" id="slip-upload" accept="image/*">
+                <button class="confirm-button" onclick="uploadSlip()">อัปโหลดสลิป</button>
+            </div>
         </div>
 
         <!-- Reservation Details -->

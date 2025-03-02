@@ -10,6 +10,7 @@ const bcrypt = require("bcrypt");
 const multer = require("multer");
 const fs = require("fs");
 const Stripe = require('stripe');
+const QRCode = require("qrcode");
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 // const FacebookStrategy = require('passport-facebook').Strategy;
 // const AppleStrategy = require('passport-apple').Strategy;
