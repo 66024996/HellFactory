@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Phayao Place - Rooms</title>
+    <style>
+        /* General Styles */
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            height: 100%;
+            background: #ffffff;
+        }
+
+        /* Navbar Section */
+        header {
+            background: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
+            color: white;
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: absolute; 
+            top: 0;
+            width: calc(100% - 80px);
+            z-index: 1000;
+        }
+        .nav-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        nav {
+            display: flex;
+            gap: 15px;
+        }
+        nav a {
+            color: white;
+            margin: 0 15px;
+            transition: color 0.3s ease, background-color 0.3s ease;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 20px;
+        }
+        nav a:hover {
+            color: black;
+            background-color: #F2CC8F;
+        }
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .profile-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #F2CC8F;
+        cursor: pointer;
+    }
+    .profile-button img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        transition: transform 0.2s ease;
+    }
+
+    .profile-button img:hover {
+        transform: scale(1.1);
+    }
+
+        .header-image {
+            background-image: url('./image/ภาพเลื่อนหน้า Rooms.jpg'); 
+            background-size: cover;
+            background-position: center;
+            height: 300px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .reservation-details {
+            width: 100%;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .details-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-left: 5%;
+            margin-right: 5%;
+            gap: 5%;
+            cursor: pointer;
+        }
+
+        .details-content:hover {
+            background-color: #f9f9f9;
+        }
+
+        .details-content img {
+            width: 40%;
+            border-radius: 10px;
+            margin-bottom: 0;
+        }
+
+        /* Footer Section */
+        footer {
+            background: #FF9B81;
+            color: black;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        footer a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <script>
+        function goToPage(pageUrl) {
+            window.location.href = pageUrl;
+        }
+    </script>
+</head>
+<body>
+    <!-- Navbar Section -->
+    <header>
+        <span class="brand">Phayao Place</span>
+        <div class="nav-container">
+            <nav>
+                <a href="about">About</a>
+                <a href="rooms">Rooms</a>
+                <a href="facilities">Facilities</a>
+                <a href="dining">Dining</a>
+                <a href="reservation">Reservation</a>
+            </nav>
+            <div class="profile-button" data-user-id="<%= user ? user.id : '' %>" onclick="navigateToProfile()">
+                <% if (user) { %>
+                    <!-- ✅ แสดงรูปโปรไฟล์ของผู้ใช้ -->
+                    <img src="<%= user.profile_picture ? user.profile_picture : '/uploads/default.png' %>" alt="Profile">
+                <% } else { %>
+                    <!-- 🔴 ถ้าไม่ได้ล็อกอิน ให้แสดงปุ่ม Login -->
+                    <div class="login-circle">Login</div>
+                <% } %>
+            </div>
+        </div>
+    </header>
+
+    <!-- Header Image Section -->
+    <div class="header-image">
+    </div>
+
+    <!-- Reservation Details -->
+    <div class="reservation-details">
+        <div class="details-content" onclick="goToPage('roomS')">
+            <img src="./image/ห้องนอน(5).png" alt="Room Image">
+            <div>
+                <h1>SUPERIOR TERRACE</h1>
+                <p>Superior Terrace at The Pier Hotel is designed and tailored to match every expectation of the traveler. Offering tropical outdoor views from the private terrace, Superior Terrace is the true calling of a traveler’s tune.</p>
+                <p>- Room Size: 326 sq. ft. to 433 sq. ft.</p>
+                <p>- King / Queen bed*</p>
+                <p>- 49-inch LED TV</p>
+                <p>- NOW TV channels</p>
+                <p>- Shower cubicle</p>
+                <p>- Complimentary Wi-Fi access</p>
+                <p>- Free local call</p>
+            </div>
+        </div>
+        <div class="details-content" onclick="goToPage('roomS')">
+            <div>
+                <h1>DELUXE TERRACE</h1>
+                <p>Deluxe Terrace are blessed with exquisite views of the private terrace that flourish the Pier Hotel. Made with a touch of voyager taste, the Deluxe Terrace are known best for the relaxation they bring to an explorer like you.</p>
+                <p>- Room Size: 461 sq. ft. to 567 sq. ft.</p>
+                <p>- King bed / twin bed*</p>
+                <p>- 49-inch LED TV</p>
+                <p>- NOW TV channels</p>
+                <p>- Shower cubicle</p>
+                <p>- Complimentary Wi-Fi access</p>
+                <p>- Free local calls</p>
+                <p>- Connecting rooms*</p>
+            </div>
+            <img src="./image/ห้องนอน(5).png" alt="Room Image">
+        </div>
+        <div class="details-content" onclick="goToPage('roomS')">
+            <img src="./image/ห้องนอน(5).png" alt="Room Image">
+            <div>
+                <h1>OCEAN FRONT TERRACE</h1>
+                <p>Take in the unhampered sea views of Pak Sha Wan from your floor-to-ceiling windows as you relax in Ocean Front Terrace at The Pier Hotel, surrounded by modern conveniences and elegant décor.</p>
+                <p>- Room Size: 386 sq. ft. to 489 sq. ft.</p>
+                <p>- King bed</p>
+                <p>- NOW TV channels</p>
+                <p>- Shower cubicle</p>
+                <p>- Complimentary Wi-Fi access</p>
+                <p>- Washing & drying unit*</p>
+                <p>- Connecting rooms*</p>
+                <p>- Free local call</p>
+            </div>
+        </div>
+        <div class="details-content" onclick="goToPage('roomS')">
+            <div>
+                <h1>PREMIUM OCEAN FRONT TERRACE</h1>
+                <p>Indulge yourself with contemporary comforts in the luxurious Premium Ocean Front Terrace, a bright and airy haven to uplift your body and spirit. Luxuriate in the deep-soaking bathtub, and feel the soft sea breeze from the floor-to-ceiling window.</p>
+                <p>- Room Size: 628 sq. ft. to 646 sq. ft.</p>
+                <p>- King bed</p>
+                <p>- 49-inch LED TV</p>
+                <p>- NOW TV channels</p>
+                <p>- Shower cubicle & in-room single bathtub</p>
+                <p>- Complimentary Wi-Fi access</p>
+                <p>- Washing & drying unit</p>
+                <p>- Free local call</p>
+            </div>
+            <img src="./image/ห้องนอน(5).png" alt="Room Image">
+        </div>
+    </div>
+
+    <!-- Footer Section -->
+    <footer>
+        <p>&copy; 2025 Phayao Place. All Rights Reserved.</p>
+        <p>
+            <a href="#privacy">Privacy Policy</a> |
+            <a href="#terms">Terms of Service</a> |
+            <a href="#contact">Contact Us</a>
+        </p>
+    </footer>
+    <script>
+        function navigateToProfile() {
+            const profileButton = document.querySelector(".profile-button");
+
+            console.log("Profile Button:", profileButton); // ✅ ตรวจสอบว่ามีค่าไหม
+
+            if (!profileButton) {
+                alert("❌ Profile button not found!");
+                return;
+            }
+
+            const userId = profileButton.getAttribute("data-user-id");
+            console.log("User ID:", userId); // ✅ เช็คค่าที่ดึงมา
+
+            if (userId) {
+                window.location.href = `/profile/${userId}`;
+            } else {
+                window.location.href = "/login";
+            }
+        }
+    </script>
+</body>
+</html>

@@ -96,9 +96,18 @@
               <a href="dining">Dining</a>
               <a href="reservation">Reservation</a>
           </nav>
-          <div class="profile-button" onclick="navigateToProfile()">
-              <img src="image/user.png" alt="Profile">
+          <!-- ปุ่ม Profile -->
+          <div class="profile-button" data-user-id="<%= user ? user.id : '' %>" onclick="navigateToProfile()">
+            <% if (user) { %>
+              <!-- ✅ แสดงรูปโปรไฟล์ของผู้ใช้ -->
+              <img src="<%= user.profile_picture ? user.profile_picture : '/uploads/default.png' %>" alt="Profile">
+            <% } else { %>
+              <!-- 🔴 ถ้าไม่ได้ล็อกอิน ให้แสดงปุ่ม Login -->
+              <div class="login-circle">Login</div>
+            <% } %>
           </div>
+
+        
       </div>
   </header>
     <div class="relative h-[400px]">
@@ -130,5 +139,28 @@
           <a href="#contact">Contact Us</a>
       </p>
   </footer>
+  <script>
+    function navigateToProfile() {
+      const profileButton = document.querySelector(".profile-button");
+
+      console.log("Profile Button:", profileButton); // ✅ ตรวจสอบว่ามีค่าไหม
+
+      if (!profileButton) {
+        alert("❌ Profile button not found!");
+        return;
+      }
+
+      const userId = profileButton.getAttribute("data-user-id");
+      console.log("User ID:", userId); // ✅ เช็คค่าที่ดึงมา
+
+      if (userId) {
+        window.location.href = `/profile/${userId}`;
+      } else {
+        window.location.href = "/login";
+      }
+    }
+
+  </script>
+  
   </body>
 </html>

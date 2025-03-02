@@ -11,9 +11,8 @@ const multer = require("multer");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const fs = require("fs");
-const { checkPaymentStatus } = require('./paymentService');
-
 const Stripe = require('stripe');
+const router = express.Router();
 const QRCode = require("qrcode");
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 // const FacebookStrategy = require('passport-facebook').Strategy;
@@ -114,14 +113,17 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 
 // ใช้ express-session สำหรับจัดการ session
+require("dotenv").config();
+
 app.use(
   session({
-    secret: "xAM6QkdRgD54XbTcUS27uEthZFwejvyW", // ใส่คีย์ลับที่ปลอดภัย
-    resave: false, // ไม่บันทึก session ที่ไม่มีการเปลี่ยนแปลง
-    saveUninitialized: true, // บันทึก session ที่ยังไม่มีข้อมูลเริ่มต้น
-    cookie: { secure: false }, // ใช้ true ถ้าใช้ HTTPS
+    secret: process.env.SESSION_SECRET || "defaultSecretKey", 
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: process.env.NODE_ENV === "production", maxAge: 1000 * 60 * 60 },
   })
 );
+
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -264,32 +266,59 @@ app.get("/login", (req, res) => {
 });
 
 // เส้นทางตรวจสอบ Login
-app.post("/login", async (req, res) => {
-  try {
-      const { username, password } = req.body;
-      const [rows] = await pool.query("SELECT * FROM users WHERE username = ?", [username]);
+app.get("/login", (req, res) => {
+  res.render("login", { error: null });
+});
 
-      if (rows.length === 0) {
-          return res.render("login", { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
-      }
-
-      const user = rows[0];
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-          return res.render("login", { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
-      }
-
-      req.session.user = user;
-      res.redirect(`/profile/${user.id}`); // ✅ เปลี่ยนเส้นทางจากฝั่ง Server
-
-  } catch (error) {
-      console.error("❌ Login Error:", error);
-      res.render("login", { error: "เกิดข้อผิดพลาด โปรดลองอีกครั้ง" });
-  }
+app.get("/session-check", (req, res) => {
+  res.send("Session User ID: " + req.session.userId);
 });
 
 
+// เส้นทางตรวจสอบ Login
+app.post("/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
 
+    console.log("🔍 Login attempt for:", username);
+
+    const [rows] = await pool.query(
+      "SELECT id, password, role FROM users WHERE LOWER(username) = LOWER(?)", 
+      [username]
+    );
+
+    if (rows.length === 0) {
+      console.warn("⚠️ No user found");
+      return res.status(401).json({ success: false, error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
+    }
+
+    const user = rows[0];
+    console.log("🔍 User Found:", user);
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      console.warn("⚠️ Password mismatch");
+      return res.status(401).json({ success: false, error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
+    }
+
+    // 🔹 ตั้งค่า role
+    const role = user.role && user.role.trim() === "admin" ? "admin" : "user";
+
+    // 🔹 เซ็ต session
+    req.session.userId = user.id;
+    req.session.userRole = role;
+    await req.session.save();
+
+    console.log("✅ Session Set:", req.session);
+
+    // 🔹 ส่งข้อมูลกลับไปให้ Frontend ใช้ Redirect
+    return res.status(200).json({ success: true, userId: user.id, role });
+
+  } catch (error) {
+    console.error("❌ Login Error:", error);
+    return res.status(500).json({ success: false, error: "เกิดข้อผิดพลาด โปรดลองอีกครั้ง" });
+  }
+});
 
 // เส้นทางสำหรับแสดงหน้า newpassword
 app.get("/newpassword", (req, res) => {
@@ -437,17 +466,18 @@ app.get("/verify", async (req, res) => {
 app.get("/profile/:id", async (req, res) => {
   try {
     const userId = req.params.id;
-    const sql = "SELECT id, username, first_name, last_name, email, phone, profile_picture FROM users WHERE id = ?";
+    const sql = "SELECT * FROM users WHERE id = ?";
     const [rows] = await pool.query(sql, [userId]);
 
     if (rows.length === 0) {
       return res.status(404).send("ไม่พบข้อมูลผู้ใช้");
     }
+
     console.log("User data:", rows[0]); 
-    res.render("profile", { user: rows[0] });
+    res.render("profile", { user: rows[0] });  // 🔄 เปลี่ยนไปหน้าแดชบอร์ด
   } catch (error) {
     console.error("❌ ERROR:", error);
-    res.status(500).send("เกิดข้อผิดพลาดในการโหลดโปรไฟล์");
+    res.status(500).send("เกิดข้อผิดพลาด");
   }
 });
 
@@ -495,17 +525,67 @@ app.post("/upload-profile", upload.single("profilePic"), async (req, res) => {
 });
 
 
+app.get("/about", async (req, res) => {
+  console.log("Session UserID:", req.session.userId);
+  const userId = req.session.userId;
 
-app.get("/about", (req, res) => {
-  res.render("about.ejs");
+  let user = null;
+  if (userId) {
+    try {
+      const sql = "SELECT id, username, profile_picture FROM users WHERE id = ?";
+      const [rows] = await pool.query(sql, [userId]);
+      if (rows.length > 0) {
+        user = rows[0];
+        console.log("✅ User Data:", user); // ตรวจสอบข้อมูล user
+      }
+    } catch (error) {
+      console.error("❌ Database Error:", error);
+    }
+  }
+
+  res.render("about", { user });
 });
 
-app.get("/Facilities", (req, res) => {
-  res.render("Facilities.ejs");
+app.get("/Facilities", async (req, res) => {
+  console.log("Session UserID:", req.session.userId);
+  const userId = req.session.userId;
+
+  let user = null;
+  if (userId) {
+    try {
+      const sql = "SELECT id, username, profile_picture FROM users WHERE id = ?";
+      const [rows] = await pool.query(sql, [userId]);
+      if (rows.length > 0) {
+        user = rows[0];
+        console.log("✅ User Data:", user); // ตรวจสอบข้อมูล user
+      }
+    } catch (error) {
+      console.error("❌ Database Error:", error);
+    }
+  }
+
+  res.render("Facilities", { user });
 });
 
-app.get("/Dining", (req, res) => {
-  res.render("Dining.ejs");
+app.get("/Dining", async (req, res) => {
+  console.log("Session UserID:", req.session.userId);
+  const userId = req.session.userId;
+
+  let user = null;
+  if (userId) {
+    try {
+      const sql = "SELECT id, username, profile_picture FROM users WHERE id = ?";
+      const [rows] = await pool.query(sql, [userId]);
+      if (rows.length > 0) {
+        user = rows[0];
+        console.log("✅ User Data:", user); // ตรวจสอบข้อมูล user
+      }
+    } catch (error) {
+      console.error("❌ Database Error:", error);
+    }
+  }
+
+  res.render("Dining", { user });
 });
 
 app.get("/Events", (req, res) => {
@@ -526,19 +606,49 @@ app.post('/payment', (req, res) => {
 });
 
 // อัปโหลดสลิป
-app.post('/upload-slip', upload.single('slip'), (req, res) => {
+app.post('/upload-slip', upload.single('slip'), async (req, res) => {
   if (!req.file) {
-      return res.json({ success: false, message: 'ไม่มีไฟล์ที่อัปโหลด' });
+      return res.status(400).json({ success: false, message: "❌ กรุณาอัปโหลดไฟล์" });
   }
-  console.log('ไฟล์ที่อัปโหลด:', req.file.filename);
-  res.json({ success: true, referenceId: req.file.filename });
+
+  try {
+      const connection = await pool.getConnection();
+
+      // ✅ ตรวจสอบว่า referenceId มีอยู่หรือไม่
+      const [rows] = await connection.execute(
+          'SELECT id FROM payments WHERE id = ?',
+          [req.body.referenceId]
+      );
+
+      if (rows.length === 0) {
+          connection.release();
+          return res.status(404).json({ success: false, message: "❌ ไม่พบ referenceId" });
+      }
+
+      // ✅ บันทึกชื่อไฟล์ลงในฐานข้อมูล
+      await connection.execute(
+          'UPDATE payments SET slip_file = ? WHERE id = ?',
+          [req.file.filename, req.body.referenceId]
+      );
+
+      connection.release();
+      res.json({ success: true, message: "✅ อัปโหลดสลิปสำเร็จ!" });
+
+  } catch (error) {
+      console.error("❌ เกิดข้อผิดพลาด:", error);
+      res.status(500).json({ success: false, message: "❌ เกิดข้อผิดพลาด" });
+  }
 });
 
 // API ตรวจสอบสถานะการชำระเงิน
 app.get('/check-payment/:referenceId', async (req, res) => {
   try {
+      console.log("🔍 ตรวจสอบ referenceId:", req.params.referenceId);
       const connection = await pool.getConnection();
-      const [rows] = await connection.execute('SELECT email, status FROM payments WHERE referenceId = ?', [req.params.referenceId]);
+      const [rows] = await connection.execute(
+          'SELECT email, status FROM payments WHERE referenceId = ?', 
+          [req.params.referenceId]
+      );
       connection.release();
 
       if (rows.length === 0) {
@@ -546,6 +656,10 @@ app.get('/check-payment/:referenceId', async (req, res) => {
       }
 
       const { email, status } = rows[0];
+
+      if (!email) {
+          return res.status(400).json({ success: false, message: 'ไม่มีอีเมลในระบบ ไม่สามารถส่งอีเมลแจ้งเตือนได้' });
+      }
 
       // ✅ **ส่งอีเมลแจ้งเตือน**
       const mailOptions = {
@@ -555,13 +669,12 @@ app.get('/check-payment/:referenceId', async (req, res) => {
           text: `สถานะการชำระเงินของคุณ: ${status}\n\nขอบคุณที่ใช้บริการ!`
       };
 
-      transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-              console.error('❌ ส่งอีเมลล้มเหลว:', error);
-          } else {
-              console.log('📧 อีเมลถูกส่งไปที่:', info.response);
-          }
-      });
+      try {
+          const info = await transporter.sendMail(mailOptions);
+          console.log('📧 อีเมลถูกส่งไปที่:', info.response);
+      } catch (error) {
+          console.error('❌ ส่งอีเมลล้มเหลว:', error);
+      }
 
       res.json({ 
           success: true, 
@@ -577,30 +690,186 @@ app.get('/check-payment/:referenceId', async (req, res) => {
 // ✅ **API อัปเดตสถานะการชำระเงิน (สำหรับ Admin)**
 app.put('/update-payment/:id', async (req, res) => {
   const { status } = req.body;
+
   if (!['pending', 'approved', 'rejected'].includes(status)) {
       return res.status(400).json({ success: false, message: 'สถานะไม่ถูกต้อง' });
   }
+
   try {
       const connection = await pool.getConnection();
-      const [result] = await connection.execute('UPDATE payments SET status = ? WHERE id = ?', [status, req.params.id]);
+      const [result] = await connection.execute(
+          'UPDATE payments SET status = ? WHERE id = ?', 
+          [status, req.params.id]
+      );
       connection.release();
 
       if (result.affectedRows === 0) {
           return res.status(404).json({ success: false, message: 'ไม่พบข้อมูลการชำระเงิน' });
       }
+
       res.json({ success: true, message: 'อัปเดตสถานะสำเร็จ' });
+
   } catch (error) {
       res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด', error });
   }
 });
+
 app.listen(PORT, () => {
   console.log("server is running on port " + PORT)
 })
 
-app.get("/room", (req, res) => {
-  res.render("room"); // สมมติว่าใช้ EJS
+app.get("/reservation", async (req, res) => {
+  console.log("Session UserID:", req.session.userId);
+  const userId = req.session.userId;
+
+  let user = null;
+  if (userId) {
+    try {
+      const sql = "SELECT id, username, profile_picture FROM users WHERE id = ?";
+      const [rows] = await pool.query(sql, [userId]);
+      if (rows.length > 0) {
+        user = rows[0];
+        console.log("✅ User Data:", user); // ตรวจสอบข้อมูล user
+      }
+    } catch (error) {
+      console.error("❌ Database Error:", error);
+    }
+  }
+
+  res.render("reservation", { user });
 });
 
-app.get("/roomS", (req, res) => {
-  res.render("roomS"); // สมมติว่าใช้ EJS
+app.get("/rooms", async (req, res) => {
+  console.log("Session UserID:", req.session.userId);
+  const userId = req.session.userId;
+
+  let user = null;
+  if (userId) {
+    try {
+      const sql = "SELECT id, username, profile_picture FROM users WHERE id = ?";
+      const [rows] = await pool.query(sql, [userId]);
+      if (rows.length > 0) {
+        user = rows[0];
+        console.log("✅ User Data:", user); // ตรวจสอบข้อมูล user
+      }
+    } catch (error) {
+      console.error("❌ Database Error:", error);
+    }
+  }
+
+  res.render("rooms", { user });
 });
+
+// app.get("/stat", async (req, res) => {
+//   console.log("📡 Session UserID:", req.session.userId);
+//   const userId = req.session.userId;
+//   const userRole = req.session.userRole;
+
+//   // 🔹 ถ้าผู้ใช้ไม่ได้ล็อกอิน → ส่ง error 401 Unauthorized
+//   if (!userId) {
+//     console.warn("⚠️ Unauthorized access to /stat");
+//     return res.status(401).json({ error: "Unauthorized" });
+//   }
+
+//   // 🔹 อนุญาตให้เฉพาะ Admin เข้าถึงหน้านี้
+//   if (userRole !== "admin") {
+//     console.warn("⚠️ Access denied: User is not an admin");
+//     return res.status(403).json({ error: "Access denied" });
+//   }
+
+//   try {
+//     // 📌 ดึงข้อมูลผู้ใช้จากตาราง `users`
+//     const userSql = "SELECT id, username, profile-picture FROM users WHERE id = ?";
+//     const [userRows] = await pool.query(userSql, [userId]);
+
+//     if (userRows.length === 0) {
+//       console.warn("⚠️ No user found for this session");
+//       return res.status(404).json({ error: "User not found" });
+//     }
+
+//     const user = userRows[0]; // ✅ ข้อมูลผู้ใช้
+//     console.log("✅ User Data:", user);
+
+//     // 📌 ดึงข้อมูลสถิติจากตาราง `statistics`
+//     const statSql = `
+//         SELECT 
+//             CASE 
+//                 WHEN month REGEXP '^[0-9]+$' THEN 
+//                     CASE month 
+//                         WHEN '1' THEN 'January' WHEN '2' THEN 'February' 
+//                         WHEN '3' THEN 'March' WHEN '4' THEN 'April' 
+//                         WHEN '5' THEN 'May' WHEN '6' THEN 'June' 
+//                         WHEN '7' THEN 'July' WHEN '8' THEN 'August' 
+//                         WHEN '9' THEN 'September' WHEN '10' THEN 'October' 
+//                         WHEN '11' THEN 'November' WHEN '12' THEN 'December' 
+//                     END
+//                 ELSE month 
+//             END AS month,
+//             SUM(guests) AS guests, 
+//             SUM(revenue) AS revenue  
+//         FROM statistics  
+//         GROUP BY month  
+//         ORDER BY FIELD(
+//             month, 'January', 'February', 'March', 'April', 'May', 'June', 
+//             'July', 'August', 'September', 'October', 'November', 'December'
+//         );
+//     `;
+
+//     const [statsRows] = await pool.query(statSql);
+//     console.log("✅ Statistics Data:", statsRows);
+
+//     // ✅ ส่งข้อมูลผู้ใช้ + สถิติกลับไปเป็น JSON
+//     res.json({ user, statistics: statsRows });
+
+//   } catch (error) {
+//     console.error("❌ Database Error:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
+
+app.get("/stat", async (req, res) => {
+  try {
+      const statSql = `
+          SELECT 
+              CASE 
+                  WHEN month REGEXP '^[0-9]+$' THEN 
+                      CASE month 
+                          WHEN '1' THEN 'January' WHEN '2' THEN 'February' 
+                          WHEN '3' THEN 'March' WHEN '4' THEN 'April' 
+                          WHEN '5' THEN 'May' WHEN '6' THEN 'June' 
+                          WHEN '7' THEN 'July' WHEN '8' THEN 'August' 
+                          WHEN '9' THEN 'September' WHEN '10' THEN 'October' 
+                          WHEN '11' THEN 'November' WHEN '12' THEN 'December' 
+                      END
+                  ELSE month 
+              END AS month,
+              SUM(guests) AS guests, 
+              SUM(revenue) AS revenue  
+          FROM statistics  
+          GROUP BY month  
+          ORDER BY FIELD(
+              month, 'January', 'February', 'March', 'April', 'May', 'June', 
+              'July', 'August', 'September', 'October', 'November', 'December'
+          );
+      `;
+
+      // ✅ ดึงข้อมูลจาก Database
+      const [statsRows] = await pool.query(statSql);
+
+      // ✅ แปลงค่าที่เป็น string ให้เป็นตัวเลข
+      const formattedStats = statsRows.map(stat => ({
+          month: stat.month,
+          guests: Number(stat.guests),   // 🔹 แปลง guests เป็น number
+          revenue: Number(stat.revenue)  // 🔹 แปลง revenue เป็น number
+      }));
+
+      console.log("✅ Statistics Data:", formattedStats);
+
+      res.json({ statistics: formattedStats });
+
+  } catch (error) {
+      console.error("❌ Database Error:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+

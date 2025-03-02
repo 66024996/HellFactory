@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: url('/image/Profile.png') no-repeat center center/cover;
+            background: url('/image/pay.png') no-repeat center center/cover;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -253,14 +253,14 @@
         <span class="brand">Phayao Place</span>
         <div class="nav-container">
             <nav>
-                <a href="about">About</a>
-                <a href="rooms">Rooms</a>
-                <a href="facilities">Facilities</a>
-                <a href="dining">Dining</a>
-                <a href="reservation">Reservation</a>
+                <a href="/about">About</a>
+                <a href="/rooms">Rooms</a>
+                <a href="/facilities">Facilities</a>
+                <a href="/dining">Dining</a>
+                <a href="/reservation">Reservation</a>
             </nav>
             <div class="profile-button" onclick="navigateToProfile()">
-                <img src="image/user.png" alt="Profile">
+                <img src="<%= user.profile_picture ? user.profile_picture : '/uploads/default.png' %>" alt="Profile">
             </div>
         </div>
     </header>    
