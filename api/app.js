@@ -141,12 +141,55 @@ passport.use(
       clientSecret: "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",
       callbackURL: "/auth/google/callback",
     },
-    (accessToken, refreshToken, profile, done) => {
-      // ใช้ profile.id เพื่อค้นหาหรือสร้างบัญชีในฐานข้อมูล
-      return done(null, profile);
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        console.log("🔍 Google Profile:", profile);
+    
+        const email = profile.emails[0].value;
+        const id = profile.id;
+        const displayName = profile.displayName;
+        const profile_picture = profile.profile_picture?.[0]?.value || null; // ✅ ป้องกัน undefined
+    
+        // ✅ เช็กว่ามีผู้ใช้อยู่แล้วหรือไม่
+        const [rows] = await pool.query(
+          "SELECT * FROM users WHERE id = ? OR email = ?",
+          [id, email]
+        );
+    
+        if (rows.length > 0) {
+          // ✅ อัปเดตรูปโปรไฟล์ใหม่ ถ้า Google มีการเปลี่ยนแปลง
+          await pool.query(
+            "UPDATE users SET profile_picture = ? WHERE id = ?",
+            [profile_picture, id]
+          );
+          console.log("🔄 อัปเดตรูปโปรไฟล์ใหม่:", profile_picture);
+          return done(null, { ...rows[0], profile_picture: profile_picture });
+        }
+    
+        // ✅ ถ้าไม่มี ให้เพิ่มผู้ใช้ใหม่
+        const [result] = await pool.query(
+          "INSERT INTO users (id, email, name, profile_picture, role) VALUES (?, ?, ?, ?, ?)",
+          [id, email, displayName, profile_picture, "user"]
+        );
+    
+        const newUser = {
+          googleId: id,
+          email: email,
+          name: displayName,
+          profile_picture: profile_picture,
+          role: "user",
+        };
+    
+        console.log("✅ เพิ่มผู้ใช้ใหม่:", newUser);
+        return done(null, newUser);
+      } catch (error) {
+        console.error("❌ Google Auth Error:", error);
+        return done(error, null);
+      }
     }
   )
 );
+
 
 // ตั้งค่า Facebook Strategy
 // passport.use(new FacebookStrategy({
@@ -220,6 +263,14 @@ passport.use(
 // }));
 
 //  เส้นทางสำหรับ Google OAuth
+// app.get(
+//   "/auth/google/callback",
+//   passport.authenticate("google", { session: false }),
+//   (req, res) => {
+//     const token = req.user.token; // ดึง JWT Token
+//     res.redirect(`http://localhost:3000/profile?token=${token}`); // Redirect ไปหน้า Profile พร้อม Token
+//   }
+// );
 app.get(
   "/auth/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
@@ -229,7 +280,7 @@ app.get(
   "/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
   (req, res) => {
-    res.redirect("/home");
+    res.redirect(`/profile/${req.user.id}`); // 👈 เปลี่ยนเส้นทางไปหน้า Profile
   }
 );
 
@@ -390,10 +441,10 @@ app.post("/createaccount", async (req, res) => {
     // ✅ เข้ารหัสรหัสผ่าน
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ สร้างบัญชีใหม่ (is_verified = false)
+    // ✅ สร้างบัญชีใหม่ (ไม่ต้องมีการยืนยันตัวตน)
     const insertSQL = `
-      INSERT INTO users (username, first_name, last_name, email, password, is_verified) 
-      VALUES (?, ?, ?, ?, ?, 0)`;
+      INSERT INTO users (username, first_name, last_name, email, password) 
+      VALUES (?, ?, ?, ?, ?)`;
     const [result] = await pool.query(insertSQL, [
       username,
       first_name,
@@ -402,18 +453,9 @@ app.post("/createaccount", async (req, res) => {
       hashedPassword,
     ]);
 
-    const userId = result.insertId;
-
-    // ✅ สร้างโทเค็นสำหรับการยืนยัน
-    const verificationToken = jwt.sign({ userId, email }, SECRET_KEY, { expiresIn: "1d" });
-
-    // ✅ ส่งอีเมลยืนยัน
-    const verificationLink = `${FRONTEND_URL}/verify?token=${verificationToken}`;
-    await sendVerificationEmail(email, verificationLink);
-
     res.json({
-      message: `บัญชีของ ${username} ถูกสร้างเรียบร้อยแล้ว! กรุณาตรวจสอบอีเมลของคุณเพื่อยืนยันบัญชี`,
-      user_id: userId,
+      message: `บัญชีของ ${username} ถูกสร้างเรียบร้อยแล้ว!`,
+      user_id: result.insertId,
     });
   } catch (error) {
     console.error("❌ ERROR:", error);
@@ -421,47 +463,6 @@ app.post("/createaccount", async (req, res) => {
   }
 });
 
-// ✅ ฟังก์ชันส่งอีเมล
-async function sendVerificationEmail(toEmail, link) {
-  let transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: "staythenon@gmail.com", // เปลี่ยนเป็นอีเมลของคุณ
-      pass: "0955784172zx", // เปลี่ยนเป็นรหัสผ่านของคุณ
-    },
-  });
-
-  await transporter.sendMail({
-    from: '"Phayao Place" <staythenon@gmail.com>',
-    to: toEmail,
-    subject: "ยืนยันบัญชีของคุณ",
-    html: `<p>คลิกลิงก์นี้เพื่อยืนยันบัญชีของคุณ:</p>
-           <a href="${link}">${link}</a>`,
-  });
-}
-
-// ✅ API ยืนยันบัญชี
-app.get("/verify", async (req, res) => {
-  try {
-    const { token } = req.query;
-
-    if (!token) {
-      return res.status(400).json({ message: "Token ไม่ถูกต้อง" });
-    }
-
-    // ✅ ตรวจสอบโทเค็น
-    const { userId } = jwt.verify(token, SECRET_KEY);
-
-    // ✅ อัปเดตฐานข้อมูลให้ is_verified = true
-    const updateSQL = "UPDATE users SET is_verified = 1 WHERE id = ?";
-    await pool.query(updateSQL, [userId]);
-
-    res.json({ message: "บัญชีของคุณได้รับการยืนยันแล้ว!" });
-  } catch (error) {
-    console.error("❌ ERROR:", error);
-    res.status(400).json({ message: "Token ไม่ถูกต้องหรือหมดอายุ!" });
-  }
-});
 
 app.get("/profile/:id", async (req, res) => {
   try {
@@ -613,22 +614,25 @@ app.post('/upload-slip', upload.single('slip'), async (req, res) => {
 
   try {
       const connection = await pool.getConnection();
+      const referenceId = req.body.referenceId ?? null; // ถ้าไม่มี ให้ใช้ NULL
 
-      // ✅ ตรวจสอบว่า referenceId มีอยู่หรือไม่
-      const [rows] = await connection.execute(
-          'SELECT id FROM payments WHERE id = ?',
-          [req.body.referenceId]
-      );
+      // ✅ ถ้ามี referenceId ให้ตรวจสอบในฐานข้อมูล
+      if (referenceId) {
+          const [rows] = await connection.execute(
+              'SELECT id FROM payments WHERE referenceId  = ?',
+              [req.body.referenceId]
+          );
 
-      if (rows.length === 0) {
-          connection.release();
-          return res.status(404).json({ success: false, message: "❌ ไม่พบ referenceId" });
+          if (rows.length === 0) {
+              connection.release();
+              return res.status(404).json({ success: false, message: "❌ ไม่พบ referenceId" });
+          }
       }
 
-      // ✅ บันทึกชื่อไฟล์ลงในฐานข้อมูล
+      // ✅ บันทึกชื่อไฟล์ลงในฐานข้อมูล (แม้ไม่มี referenceId)
       await connection.execute(
           'UPDATE payments SET slip_file = ? WHERE id = ?',
-          [req.file.filename, req.body.referenceId]
+          [req.file.filename, referenceId]
       );
 
       connection.release();
@@ -640,31 +644,38 @@ app.post('/upload-slip', upload.single('slip'), async (req, res) => {
   }
 });
 
+
+
 // API ตรวจสอบสถานะการชำระเงิน
 app.get('/check-payment/:referenceId', async (req, res) => {
   try {
-      console.log("🔍 ตรวจสอบ referenceId:", req.params.referenceId);
+      console.log("📌 referenceId ที่รับมา:", req.params.referenceId);
+
+
+      if (!req.params.referenceId) {
+          return res.status(400).json({ success: false, message: "❌ กรุณาระบุ referenceId" });
+      }
+
       const connection = await pool.getConnection();
       const [rows] = await connection.execute(
-          'SELECT email, status FROM payments WHERE referenceId = ?', 
+          'SELECT email, status FROM payments WHERE LOWER(referenceId) = LOWER(?)', 
           [req.params.referenceId]
       );
       connection.release();
 
       if (rows.length === 0) {
-          return res.status(404).json({ success: false, message: 'ไม่พบข้อมูลการชำระเงิน' });
+          return res.status(404).json({ success: false, message: '❌ ไม่พบข้อมูลการชำระเงิน' });
       }
 
       const { email, status } = rows[0];
 
       if (!email) {
-          return res.status(400).json({ success: false, message: 'ไม่มีอีเมลในระบบ ไม่สามารถส่งอีเมลแจ้งเตือนได้' });
+          return res.status(400).json({ success: false, message: '❌ ไม่มีอีเมลในระบบ ไม่สามารถส่งอีเมลแจ้งเตือนได้' });
       }
 
-      // ✅ **ส่งอีเมลแจ้งเตือน**
       const mailOptions = {
           from: 'staythenon@gmail.com',
-          to: email,  // ✨ ใช้อีเมลจากฐานข้อมูล
+          to: email,
           subject: 'แจ้งผลการตรวจสอบชำระเงิน',
           text: `สถานะการชำระเงินของคุณ: ${status}\n\nขอบคุณที่ใช้บริการ!`
       };
@@ -679,13 +690,54 @@ app.get('/check-payment/:referenceId', async (req, res) => {
       res.json({ 
           success: true, 
           status, 
-          message: 'ตรวจสอบการชำระเงินเสร็จสิ้น และส่งอีเมลแจ้งเตือนเรียบร้อย' 
+          message: '✅ ตรวจสอบการชำระเงินเสร็จสิ้น และส่งอีเมลแจ้งเตือนเรียบร้อย' 
       });
 
   } catch (error) {
-      res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาด', error });
+      console.error("❌ เกิดข้อผิดพลาด:", error);
+      res.status(500).json({ success: false, message: '❌ เกิดข้อผิดพลาด', error });
   }
 });
+
+app.post('/record-payment', async (req, res) => {
+  try {
+      const { user_id, amount, reference_code, email } = req.body;
+
+      // ✅ ตรวจสอบว่าข้อมูลที่ส่งมาตรงกันไหม
+      if (!user_id || !amount || !reference_code || !email) {
+          return res.status(400).json({ success: false, message: "❌ กรุณากรอกข้อมูลให้ครบถ้วน" });
+      }
+
+      // ✅ เชื่อมต่อฐานข้อมูล
+      const connection = await pool.getConnection();
+
+      // ✅ ตรวจสอบว่า `reference_code` ซ้ำหรือไม่
+      const [existing] = await connection.execute(
+          'SELECT id FROM payments WHERE reference_code = ?',
+          [reference_code]
+      );
+
+      if (existing.length > 0) {
+          connection.release();
+          return res.status(400).json({ success: false, message: "❌ Reference Code นี้ถูกใช้ไปแล้ว" });
+      }
+
+      // ✅ เพิ่มข้อมูลลงในฐานข้อมูล
+      await connection.execute(
+          'INSERT INTO payments (user_id, amount, reference_code, email, status) VALUES (?, ?, ?, ?, ?)',
+          [user_id, amount, reference_code, email, 'pending']
+      );
+
+      connection.release();
+
+      res.json({ success: true, message: "✅ บันทึกข้อมูลการชำระเงินสำเร็จ!" });
+
+  } catch (error) {
+      console.error("❌ เกิดข้อผิดพลาด:", error);
+      res.status(500).json({ success: false, message: "❌ เกิดข้อผิดพลาด" });
+  }
+});
+
 
 // ✅ **API อัปเดตสถานะการชำระเงิน (สำหรับ Admin)**
 app.put('/update-payment/:id', async (req, res) => {
@@ -760,116 +812,71 @@ app.get("/rooms", async (req, res) => {
   res.render("rooms", { user });
 });
 
-// app.get("/stat", async (req, res) => {
-//   console.log("📡 Session UserID:", req.session.userId);
-//   const userId = req.session.userId;
-//   const userRole = req.session.userRole;
-
-//   // 🔹 ถ้าผู้ใช้ไม่ได้ล็อกอิน → ส่ง error 401 Unauthorized
-//   if (!userId) {
-//     console.warn("⚠️ Unauthorized access to /stat");
-//     return res.status(401).json({ error: "Unauthorized" });
-//   }
-
-//   // 🔹 อนุญาตให้เฉพาะ Admin เข้าถึงหน้านี้
-//   if (userRole !== "admin") {
-//     console.warn("⚠️ Access denied: User is not an admin");
-//     return res.status(403).json({ error: "Access denied" });
-//   }
-
-//   try {
-//     // 📌 ดึงข้อมูลผู้ใช้จากตาราง `users`
-//     const userSql = "SELECT id, username, profile-picture FROM users WHERE id = ?";
-//     const [userRows] = await pool.query(userSql, [userId]);
-
-//     if (userRows.length === 0) {
-//       console.warn("⚠️ No user found for this session");
-//       return res.status(404).json({ error: "User not found" });
-//     }
-
-//     const user = userRows[0]; // ✅ ข้อมูลผู้ใช้
-//     console.log("✅ User Data:", user);
-
-//     // 📌 ดึงข้อมูลสถิติจากตาราง `statistics`
-//     const statSql = `
-//         SELECT 
-//             CASE 
-//                 WHEN month REGEXP '^[0-9]+$' THEN 
-//                     CASE month 
-//                         WHEN '1' THEN 'January' WHEN '2' THEN 'February' 
-//                         WHEN '3' THEN 'March' WHEN '4' THEN 'April' 
-//                         WHEN '5' THEN 'May' WHEN '6' THEN 'June' 
-//                         WHEN '7' THEN 'July' WHEN '8' THEN 'August' 
-//                         WHEN '9' THEN 'September' WHEN '10' THEN 'October' 
-//                         WHEN '11' THEN 'November' WHEN '12' THEN 'December' 
-//                     END
-//                 ELSE month 
-//             END AS month,
-//             SUM(guests) AS guests, 
-//             SUM(revenue) AS revenue  
-//         FROM statistics  
-//         GROUP BY month  
-//         ORDER BY FIELD(
-//             month, 'January', 'February', 'March', 'April', 'May', 'June', 
-//             'July', 'August', 'September', 'October', 'November', 'December'
-//         );
-//     `;
-
-//     const [statsRows] = await pool.query(statSql);
-//     console.log("✅ Statistics Data:", statsRows);
-
-//     // ✅ ส่งข้อมูลผู้ใช้ + สถิติกลับไปเป็น JSON
-//     res.json({ user, statistics: statsRows });
-
-//   } catch (error) {
-//     console.error("❌ Database Error:", error);
-//     res.status(500).json({ error: "Internal Server Error" });
-//   }
-// });
-
 app.get("/stat", async (req, res) => {
+  console.log("📡 Session UserID:", req.session.userId);
+  const userId = req.session.userId;
+  const userRole = req.session.userRole;
+
+  // 🔹 ถ้าผู้ใช้ไม่ได้ล็อกอิน → ส่ง error 401 Unauthorized
+  if (!userId) {
+    console.warn("⚠️ Unauthorized access to /stat");
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  // 🔹 อนุญาตให้เฉพาะ Admin เข้าถึงหน้านี้
+  if (userRole !== "admin") {
+    console.warn("⚠️ Access denied: User is not an admin");
+    return res.status(403).json({ error: "Access denied" });
+  }
+
   try {
-      const statSql = `
-          SELECT 
-              CASE 
-                  WHEN month REGEXP '^[0-9]+$' THEN 
-                      CASE month 
-                          WHEN '1' THEN 'January' WHEN '2' THEN 'February' 
-                          WHEN '3' THEN 'March' WHEN '4' THEN 'April' 
-                          WHEN '5' THEN 'May' WHEN '6' THEN 'June' 
-                          WHEN '7' THEN 'July' WHEN '8' THEN 'August' 
-                          WHEN '9' THEN 'September' WHEN '10' THEN 'October' 
-                          WHEN '11' THEN 'November' WHEN '12' THEN 'December' 
-                      END
-                  ELSE month 
-              END AS month,
-              SUM(guests) AS guests, 
-              SUM(revenue) AS revenue  
-          FROM statistics  
-          GROUP BY month  
-          ORDER BY FIELD(
-              month, 'January', 'February', 'March', 'April', 'May', 'June', 
-              'July', 'August', 'September', 'October', 'November', 'December'
-          );
-      `;
+    // 📌 ดึงข้อมูลผู้ใช้จากตาราง `users`
+    const userSql = "SELECT id, username, profile_picture FROM users WHERE id = ?";
+    const [userRows] = await pool.query(userSql, [userId]);
 
-      // ✅ ดึงข้อมูลจาก Database
-      const [statsRows] = await pool.query(statSql);
+    if (userRows.length === 0) {
+      console.warn("⚠️ No user found for this session");
+      return res.status(404).json({ error: "User not found" });
+    }
 
-      // ✅ แปลงค่าที่เป็น string ให้เป็นตัวเลข
-      const formattedStats = statsRows.map(stat => ({
-          month: stat.month,
-          guests: Number(stat.guests),   // 🔹 แปลง guests เป็น number
-          revenue: Number(stat.revenue)  // 🔹 แปลง revenue เป็น number
-      }));
+    const user = userRows[0]; // ✅ ข้อมูลผู้ใช้
+    console.log("✅ User Data:", user);
 
-      console.log("✅ Statistics Data:", formattedStats);
+    // 📌 ดึงข้อมูลสถิติจากตาราง `statistics`
+    const statSql = `
+        SELECT 
+            CASE 
+                WHEN month REGEXP '^[0-9]+$' THEN 
+                    CASE month 
+                        WHEN '1' THEN 'January' WHEN '2' THEN 'February' 
+                        WHEN '3' THEN 'March' WHEN '4' THEN 'April' 
+                        WHEN '5' THEN 'May' WHEN '6' THEN 'June' 
+                        WHEN '7' THEN 'July' WHEN '8' THEN 'August' 
+                        WHEN '9' THEN 'September' WHEN '10' THEN 'October' 
+                        WHEN '11' THEN 'November' WHEN '12' THEN 'December' 
+                    END
+                ELSE month 
+            END AS month,
+            SUM(guests) AS guests, 
+            SUM(revenue) AS revenue  
+        FROM statistics  
+        GROUP BY month  
+        ORDER BY FIELD(
+            month, 'January', 'February', 'March', 'April', 'May', 'June', 
+            'July', 'August', 'September', 'October', 'November', 'December'
+        );
+    `;
 
-      res.json({ statistics: formattedStats });
+    const [statsRows] = await pool.query(statSql);
+    console.log("✅ Statistics Data:", statsRows);
+
+    // ✅ ส่งข้อมูลผู้ใช้ + สถิติกลับไปเป็น JSON
+    res.json({ user, statistics: statsRows });
 
   } catch (error) {
-      console.error("❌ Database Error:", error);
-      res.status(500).json({ error: "Internal Server Error" });
+    console.error("❌ Database Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 

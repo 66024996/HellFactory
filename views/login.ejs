@@ -116,7 +116,7 @@
                     <button type="submit" class="login-button" id="login-btn">Login</button>
                 </form>
                 <div class="social-login">
-                    <button type="button" class="social-button">Google</button>
+                    <button type="button" class="social-button" id="google-login">Google</button>
                     <button type="button" class="social-button">Facebook</button>
                 </div>
                 <div class="footer-links">
@@ -126,6 +126,19 @@
         </div>
     </div>
     <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const googleButton = document.getElementById("google-login");
+
+            if (!googleButton) {
+                console.error("❌ ปุ่ม Google ไม่พบใน DOM!");
+                return;
+            }
+
+            googleButton.addEventListener("click", function () {
+                console.log("✅ Google button clicked!");
+                window.location.href = "/auth/google";
+            });
+        });
         document.getElementById("login-form").addEventListener("submit", async function(event) {
             event.preventDefault(); // ❌ ป้องกัน Form รีโหลดหน้า
             console.log("✅ login function called!");

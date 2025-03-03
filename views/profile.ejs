@@ -306,9 +306,9 @@
             <input type="text" name="first_name" value="<%= user.first_name %>">
             <label for="name">Surname</label>
             <input type="text" name="last_name" value="<%= user.last_name %>">
-            <label for="name">Email</label>
-            <input type="text" name="phone" value="<%= user.phone || '' %>">
             <label for="name">Tel.</label>
+            <input type="text" name="phone" value="<%= user.phone || '' %>">
+            <label for="name">Email.</label>
             <input type="text" name="email" value="<%= user.email || '' %>">
         </div>
             <button type="submit" class="save-button">บันทึก</button>
@@ -317,6 +317,7 @@
     </div>
 
     <script>
+        
         function navigateToProfile() {
             window.location.href = "profile";
         }

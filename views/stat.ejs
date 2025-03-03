@@ -1,49 +1,181 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Statistics Chart</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Statistics</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            background: url('image/lobby.jpg') no-repeat center center/cover;
+        }
+
+        /* Navbar Styling */
+        header {
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: absolute; 
+            top: 0;
+            width: calc(100% - 80px);
+            z-index: 1000;
+        }
+        .nav-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        nav {
+            display: flex;
+            gap: 15px;
+        }
+        nav a {
+            color: white;
+            margin: 0 15px;
+            transition: color 0.3s ease, background-color 0.3s ease;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 20px;
+        }
+        nav a:hover {
+            color: black;
+            background-color: #F2CC8F;
+        }
+        .brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .profile-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #F2CC8F;
+        cursor: pointer;
+    }
+    .profile-button img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        transition: transform 0.2s ease;
+    }
+
+    .profile-button img:hover {
+        transform: scale(1.1);
+    }
+        
+        /* Page Layout */
+        .container {
+            display: flex;
+            justify-content: center;
+            margin-top: 10%;
+            padding: 20px;
+        }
+
+        .stats-table {
+            width: 80%;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background: #F2CC8F;
+            color: black;
+        }
+    </style>
 </head>
 <body>
-    <canvas id="statsChart"></canvas> <!-- 🔹 ตำแหน่งของกราฟ -->
-    
-    <script>
-        fetch("http://localhost:3000/stat")  // ⬅️ เรียก API
-            .then(response => response.json())
-            .then(data => {
-                const months = data.statistics.map(stat => stat.month);   // ✅ ดึงชื่อเดือน
-                const guests = data.statistics.map(stat => stat.guests);  // ✅ ดึงจำนวนผู้ใช้บริการ
-                const revenue = data.statistics.map(stat => stat.revenue); // ✅ ดึงรายได้
 
-                const ctx = document.getElementById("statsChart").getContext("2d");
-                new Chart(ctx, {
-                    type: "bar", // ✅ ใช้ bar chart (แท่งกราฟ)
-                    data: {
-                        labels: months,  // ✅ ใช้ชื่อเดือนเป็นแกน X
-                        datasets: [
-                            {
-                                label: "Guests", 
-                                data: guests,
-                                backgroundColor: "rgba(54, 162, 235, 0.6)" // 🔹 สีน้ำเงิน
-                            },
-                            {
-                                label: "Revenue",
-                                data: revenue,
-                                backgroundColor: "rgba(255, 99, 132, 0.6)" // 🔹 สีแดง
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: { beginAtZero: true } // ✅ แกน Y เริ่มจาก 0
-                        }
-                    }
-                });
-            })
-            .catch(error => console.error("❌ Error fetching data:", error));
+    <!-- Navbar -->
+    <header>
+        <span class="brand">Phayao Place</span>
+        <div class="nav-container">
+            <nav>
+                <a href="about">About</a>
+                <a href="rooms">Rooms</a>
+                <a href="facilities">Facilities</a>
+                <a href="dining">Dining</a>
+                <a href="reservation">Reservation</a>
+            </nav>
+            <div class="profile-button" onclick="navigateToProfile()">
+                <img src="image/user.png" alt="Profile">
+            </div>
+        </div>
+    </header>
+
+    <!-- Content -->
+    <div class="container">
+        <div class="stats-table">
+            <h2>สถิติรายเดือน</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>เดือน</th>
+                        <th>จำนวนผู้เข้าพัก</th>
+                        <th>รายได้ (บาท)</th>
+                    </tr>
+                </thead>
+                <tbody id="stats-body">
+                    <!-- Data will be inserted here dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function navigateToProfile() {
+            window.location.href = "profile";
+        }
+        async function fetchData() {
+            try {
+                const response = await fetch("http://localhost:3000/stat");
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return await response.json();
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                return { months: [], guests: [], revenue: [] };
+            }
+        }
+
+        async function updateUI() {
+            const data = await fetchData();
+            const tableBody = document.getElementById("stats-body");
+            tableBody.innerHTML = "";
+
+            data.forEach((entry) => {
+                const row = `<tr>
+                    <td>${entry.month}</td>
+                    <td>${entry.guests} คน</td>
+                    <td>${entry.revenue.toLocaleString()} บาท</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        updateUI();
     </script>
 </body>
 </html>
